@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "msg.h": "c",
+        "shm.h": "c",
+        "wait.h": "c",
+        "types.h": "c"
+    }
+}
