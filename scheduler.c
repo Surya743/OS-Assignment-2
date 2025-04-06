@@ -27,6 +27,7 @@ typedef struct
     struct ShipRequest *dockedShip; // Pointer to the docked ship request
     int dockedTimestep;             // Timestep when the ship docked
     int lastCargoMovedTimestep;
+    int dockedDirection;
 } Dock;
 
 typedef struct MessageStruct
@@ -399,49 +400,79 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
 
 void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
 {
+    // Create temporary arrays to hold ships while we process them
+    ShipRequest *emergencyShips[MAX_NEW_REQUESTS];
+    ShipRequest *regularShips[MAX_NEW_REQUESTS];
+    int emergencyCount = 0;
+    int regularCount = 0;
+
+    // Step 1: Extract all ships from the queue and categorize them
     while (!isEmptyPQ(pq))
     {
         ShipRequest *ship = extractMinPQ(pq);
 
-        // Check if this ship is already docked in any dock.
+        printf("Processing Ship ID %d, Category %d, Emergency %d, Waiting Time %d Direction %d Timestep %d\n",
+               ship->shipId, ship->category, ship->emergency, ship->waitingTime, ship->direction, ship->timestep);
+
+        // Check if this ship is already docked in any dock
         int alreadyDocked = 0;
         for (int i = 0; i < numDocks; i++)
         {
-            if (docks[i].dockedShip != NULL && docks[i].dockedShip->shipId == ship->shipId)
+            if (docks[i].dockedShip != NULL && (docks[i].dockedShip->shipId == ship->shipId && docks[i].dockedDirection == ship->direction))
             {
                 alreadyDocked = 1;
                 break;
             }
         }
+
         if (alreadyDocked)
         {
-            // Skip processing for this ship.
+            // free(ship); // Free the ship since it's already docked
             continue;
         }
 
-        Dock *freeDock = findBestDock(ship, numDocks, docks);
-        if ((freeDock && ship->emergency) || (freeDock && (currentTimestep <= ship->timestep + ship->waitingTime)))
+        // Categorize ships
+        if (ship->emergency)
         {
-            ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
-            *shipCopy = *ship;
+            printf("Emergency Ship ID %d with category %d\n", ship->shipId, ship->category);
+            emergencyShips[emergencyCount++] = ship;
+        }
+        else
+        {
+            regularShips[regularCount++] = ship;
+        }
+    }
 
-            freeDock->assignedShip = shipCopy->shipId;
+    // Step 2: Process emergency ships first (priority assignment)
+    for (int i = 0; i < emergencyCount; i++)
+    {
+        ShipRequest *ship = emergencyShips[i];
+        Dock *freeDock = findBestDock(ship, numDocks, docks);
 
-            freeDock->dockedShip = shipCopy;
-            freeDock->remainingCargo = shipCopy->numCargo; // Initialize remaining cargo
+        if (freeDock)
+        {
+            // Assign emergency ship to dock
+            freeDock->assignedShip = ship->shipId;
+            freeDock->dockedShip = ship;
+            freeDock->remainingCargo = ship->numCargo;
+            freeDock->dockedDirection = ship->direction;
             freeDock->dockedTimestep = currentTimestep;
-            printf("Assigned waiting Ship ID %d to Dock ID %d with category %d at timestep %d \n", shipCopy->shipId, freeDock->id, freeDock->category, freeDock->dockedTimestep);
 
+            printf("Assigned emergency Ship ID %d to Dock ID %d with category %d at timestep %d\n",
+                   ship->shipId, freeDock->id, freeDock->category, freeDock->dockedTimestep);
+
+            // Send docking message
             MessageStruct msg;
             msg.mtype = 2;
             msg.dockId = freeDock->id;
-            msg.shipId = shipCopy->shipId;
-            msg.direction = shipCopy->direction;
+            msg.shipId = ship->shipId;
+            msg.direction = ship->direction;
 
             usleep(3000);
             if (!msgsnd(validationMsgQID, &msg, sizeof(MessageStruct) - sizeof(long), 0))
             {
-                printf("Sent assignment message for Ship ID %d to Dock %d Direction %d\n", shipCopy->shipId, freeDock->id, shipCopy->direction);
+                printf("Sent assignment message for emergency Ship ID %d to Dock %d Direction %d\n",
+                       ship->shipId, freeDock->id, ship->direction);
             }
             else
             {
@@ -451,15 +482,117 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
         }
         else
         {
-            ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
-            *shipCopy = *ship;
+            // No suitable dock found, reinsert the emergency ship
+            insertPQ(pq, ship);
+        }
+    }
 
-            // No suitable dock found, reinsert the ship and break
-            insertPQ(pq, shipCopy);
-            break;
+    // Step 3: Process regular ships with remaining docks
+    for (int i = 0; i < regularCount; i++)
+    {
+        ShipRequest *ship = regularShips[i];
+        Dock *freeDock = findBestDock(ship, numDocks, docks);
+
+        if (freeDock && (currentTimestep <= ship->timestep + ship->waitingTime))
+        {
+            // Assign regular ship to dock
+            freeDock->assignedShip = ship->shipId;
+            freeDock->dockedShip = ship;
+            freeDock->remainingCargo = ship->numCargo;
+            freeDock->dockedTimestep = currentTimestep;
+
+            printf("Assigned regular Ship ID %d to Dock ID %d with category %d at timestep %d\n",
+                   ship->shipId, freeDock->id, freeDock->category, freeDock->dockedTimestep);
+
+            // Send docking message
+            MessageStruct msg;
+            msg.mtype = 2;
+            msg.dockId = freeDock->id;
+            msg.shipId = ship->shipId;
+            msg.direction = ship->direction;
+
+            usleep(3000);
+            if (!msgsnd(validationMsgQID, &msg, sizeof(MessageStruct) - sizeof(long), 0))
+            {
+                printf("Sent assignment message for Ship ID %d to Dock %d Direction %d\n",
+                       ship->shipId, freeDock->id, ship->direction);
+            }
+            else
+            {
+                perror("Docking failed to send message");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            // No suitable dock found or waiting time exceeded, reinsert the ship
+            insertPQ(pq, ship);
         }
     }
 }
+
+// void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
+// {
+//     while (!isEmptyPQ(pq))
+//     {
+//         ShipRequest *ship = extractMinPQ(pq);
+
+//         // Check if this ship is already docked in any dock.
+//         int alreadyDocked = 0;
+//         for (int i = 0; i < numDocks; i++)
+//         {
+//             if (docks[i].dockedShip != NULL && docks[i].dockedShip->shipId == ship->shipId)
+//             {
+//                 alreadyDocked = 1;
+//                 break;
+//             }
+//         }
+//         if (alreadyDocked)
+//         {
+//             // Skip processing for this ship.
+//             continue;
+//         }
+
+//         Dock *freeDock = findBestDock(ship, numDocks, docks);
+//         if ((freeDock && ship->emergency) || (freeDock && (currentTimestep <= ship->timestep + ship->waitingTime)))
+//         {
+//             ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
+//             *shipCopy = *ship;
+
+//             freeDock->assignedShip = shipCopy->shipId;
+
+//             freeDock->dockedShip = shipCopy;
+//             freeDock->remainingCargo = shipCopy->numCargo; // Initialize remaining cargo
+//             freeDock->dockedTimestep = currentTimestep;
+//             printf("Assigned waiting Ship ID %d to Dock ID %d with category %d at timestep %d \n", shipCopy->shipId, freeDock->id, freeDock->category, freeDock->dockedTimestep);
+
+//             MessageStruct msg;
+//             msg.mtype = 2;
+//             msg.dockId = freeDock->id;
+//             msg.shipId = shipCopy->shipId;
+//             msg.direction = shipCopy->direction;
+
+//             usleep(3000);
+//             if (!msgsnd(validationMsgQID, &msg, sizeof(MessageStruct) - sizeof(long), 0))
+//             {
+//                 printf("Sent assignment message for Ship ID %d to Dock %d Direction %d\n", shipCopy->shipId, freeDock->id, shipCopy->direction);
+//             }
+//             else
+//             {
+//                 perror("Docking failed to send message");
+//                 exit(EXIT_FAILURE);
+//             }
+//         }
+//         else
+//         {
+//             ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
+//             *shipCopy = *ship;
+
+//             // No suitable dock found, reinsert the ship and break
+//             insertPQ(pq, shipCopy);
+//         }
+//     }
+// }
 
 void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, int solverMsgQueues[], int numSolvers)
 {
@@ -480,16 +613,29 @@ void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, D
     }
     printf("Attached shared memory for new requests\n");
 
-    // Insert each new request into the waiting queue or assign immediately.
     for (int i = 0; i < msg.numShipRequests; i++)
     {
         ShipRequest *request = &mainMem->newShipRequests[i];
-        printf("Received New Ship Request: ID %d, Category %d\n", request->shipId, request->category);
-        if (request->emergency)
+
+        // Create a new ship request (deep copy)
+        ShipRequest *newRequest = malloc(sizeof(ShipRequest));
+        if (!newRequest)
         {
-            request->waitingTime = -1;
+            perror("Failed to allocate memory for ship request");
+            exit(EXIT_FAILURE);
         }
-        insertPQ(pq, request);
+
+        // Copy the ship request
+        memcpy(newRequest, request, sizeof(ShipRequest));
+
+        printf("Received New Ship Request: ID %d, Category %d Emergency %d \n ", newRequest->shipId, newRequest->category, newRequest->emergency);
+        if (newRequest->emergency)
+        {
+            newRequest->waitingTime = -1;
+        }
+
+        // Insert the copy into the priority queue
+        insertPQ(pq, newRequest);
     }
 
     assignWaitingShips(numDocks, docks, validationMsgQID, currentTimestep);
@@ -597,6 +743,11 @@ int main(int argc, char *argv[])
         switch (msg.mtype)
         {
         case 1:
+            if (msg.isFinished)
+            {
+                printf("Scheduler docked all ships\n");
+                exit(0);
+            }
             processNewShipRequests(sharedMemKey, msg, numDocks, docks, id, msg.timestep, solverMsgQKeys, totalSolvers);
             break;
         default:
