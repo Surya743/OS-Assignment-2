@@ -421,7 +421,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
             if (docks[i].dockedShip != NULL && (docks[i].dockedShip->shipId == ship->shipId && docks[i].dockedDirection == ship->direction))
             {
                 alreadyDocked = 1;
-                break;
+                break;  // lite
             }
         }
 
@@ -493,7 +493,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
         ShipRequest *ship = regularShips[i];
         Dock *freeDock = findBestDock(ship, numDocks, docks);
 
-        if (freeDock && (currentTimestep <= ship->timestep + ship->waitingTime))
+        if (freeDock && ((currentTimestep <= ship->timestep + ship->waitingTime && ship->direction == 1 && ship->emergency == 0) || (ship->emergency == 1) || (ship->direction == -1 && ship->emergency == 0)))
         {
             // Assign regular ship to dock
             freeDock->assignedShip = ship->shipId;
@@ -668,7 +668,7 @@ int main(int argc, char *argv[])
     //     return EXIT_FAILURE;
     // }
 
-    int testcase = 1; // atoi(argv[1]);
+    int testcase = 2; // atoi(argv[1]);
 
     char filename[20];
     snprintf(filename, sizeof(filename), "testcase%d/input.txt", testcase);
