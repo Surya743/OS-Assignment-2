@@ -14,6 +14,9 @@
 #define MAX_NEW_REQUESTS 50
 #define MAX_AUTH_STRING_LEN 100
 
+char charset[] = {'5', '6', '7', '8', '9', '.'};
+int charsetSize = sizeof(charset) / sizeof(char);
+
 typedef struct
 {
     int id;
@@ -23,6 +26,7 @@ typedef struct
     int remainingCargo;             // Remaining cargo to unload
     struct ShipRequest *dockedShip; // Pointer to the docked ship request
     int dockedTimestep;             // Timestep when the ship docked
+    int lastCargoMovedTimestep;
 } Dock;
 
 typedef struct MessageStruct
@@ -202,13 +206,98 @@ Dock *findBestDock(ShipRequest *ship, int numDocks, Dock *docks)
     return bestDock;
 }
 
-void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
+int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, SolverRequest *req, SolverResponse *resp, char *authString)
+{
+    for (int i = 0; i < charsetSize; ++i)
+    {
+        char c = charset[i];
+
+        // Skip invalid first/last characters
+        if ((pos == 0 || pos == length - 1) && c == '.')
+            continue;
+
+        guess[pos] = c;
+
+        if (pos == length - 1)
+        {
+            guess[length] = '\0';
+            strncpy(req->authStringGuess, guess, MAX_AUTH_STRING_LEN);
+            req->dockId = dockId;
+            req->mtype = 2;
+
+            // Send request
+            if (msgsnd(msgqid, req, sizeof(SolverRequest) - sizeof(long), 0) == -1)
+            {
+                perror("msgsnd");
+                exit(1);
+            }
+
+            // Receive response
+            if (msgrcv(msgqid, resp, sizeof(SolverResponse) - sizeof(long), 3, 0) == -1)
+            {
+                perror("msgrcv");
+                exit(1);
+            }
+
+            if (resp->guessIsCorrect == 1)
+            {
+                printf("Correct guess found: %s\n", guess);
+                strncpy(authString, guess, MAX_AUTH_STRING_LEN);
+                return 1; // signal to stop recursion
+            }
+        }
+        else
+        {
+            if (backtrackGuess(guess, pos + 1, length, dockId, msgqid, req, resp, authString))
+                return 1; // bubble up success
+        }
+    }
+
+    return 0; // no correct guess found in this path
+}
+
+void generateAndSendGuesses(int length, int dockId, int msgkey, char *authString, int *solverMsgQ, int numSolvers)
+{
+    char guess[MAX_AUTH_STRING_LEN];
+    int msgqid = msgget(msgkey, IPC_CREAT | 0666);
+    if (msgqid == -1)
+    {
+        perror("msgget");
+        exit(EXIT_FAILURE);
+    }
+    SolverRequest preReq;
+
+    preReq.mtype = 1;
+    preReq.dockId = dockId;
+
+    usleep(3000);
+    for (int i = 0; i < numSolvers; i++)
+    {
+        int solver_q = msgget(solverMsgQ[i], IPC_CREAT | 0666);
+        if (msgsnd(solver_q, &preReq, sizeof(preReq) - sizeof(long), 0) == -1)
+        {
+            perror("Error sending msg for solver\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    SolverRequest req;
+    SolverResponse resp;
+
+    req.mtype = 2;
+    req.dockId = dockId;
+
+    backtrackGuess(guess, 0, length, dockId, msgqid, &req, &resp, authString);
+}
+
+void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, ShipRequest *shipsToUndock, MainSharedMemory *mainMem, int numSolvers, int solverMsgQ[])
 {
     printf("\n-- Simulating cargo movement for current timestep --\n");
 
+    int countOfshipsToUndock = 0;
     for (int i = 0; i < numDocks; i++)
     {
-        printf("Dock %d: Ship ID Parked: %d \n", i, docks[i].assignedShip);
+        printf("Dock %d: Ship ID Parked: %d at timestep %d \n", i, docks[i].assignedShip, docks[i].dockedTimestep);
         if (docks[i].assignedShip != -1 && docks[i].dockedShip != NULL && docks[i].dockedTimestep < currentTimestep)
         {
             ShipRequest *ship = docks[i].dockedShip;
@@ -257,6 +346,7 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
 
                         ship->cargo[k] = -1; // Mark as moved
                         docks[i].remainingCargo--;
+                        docks[i].lastCargoMovedTimestep = currentTimestep;
                         cranesUsed[c] = 1;
                         break; // Move to next crane
                     }
@@ -264,24 +354,73 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
             }
 
             // If all cargo is moved, undock the ship
-            if (docks[i].remainingCargo <= 0)
+            if (docks[i].remainingCargo <= 0 && docks[i].lastCargoMovedTimestep < currentTimestep)
             {
                 printf("Ship ID %d finished unloading at Dock %d and undocks.\n", ship->shipId, i);
                 docks[i].assignedShip = -1;
                 docks[i].dockedShip = NULL;
                 docks[i].remainingCargo = 0;
+
+                // Create a copy of ship
+                ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
+                *shipCopy = *ship;
+                shipsToUndock[countOfshipsToUndock] = *shipCopy;
+                countOfshipsToUndock++;
+
+                int authStringLength = docks[i].lastCargoMovedTimestep - docks[i].dockedTimestep;
+                char authString[MAX_AUTH_STRING_LEN];
+                generateAndSendGuesses(authStringLength, docks[i].id, solverMsgQ[0], authString, solverMsgQ, numSolvers);
+                printf("Generated auth string for Ship ID %d: %s\n", ship->shipId, authString);
+
+                // Remove \0 from authString
+
+                strncpy(mainMem->authStrings[docks[i].id], authString, MAX_AUTH_STRING_LEN);
+
+                MessageStruct msg;
+                msg.mtype = 3;
+                msg.dockId = docks[i].id;
+                msg.shipId = ship->shipId;
+                msg.direction = ship->direction;
+
+                usleep(3000);
+                if (!msgsnd(validationMsgQID, &msg, sizeof(msg) - sizeof(long), 0))
+                {
+                    printf("Sent undocking message for Ship ID %d to Dock %d\n", ship->shipId, i);
+                }
+                else
+                {
+                    perror("Failed to send undocking message");
+                    exit(EXIT_FAILURE);
+                }
             }
         }
     }
 }
 
-void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID)
+void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
 {
     while (!isEmptyPQ(pq))
     {
         ShipRequest *ship = extractMinPQ(pq);
+
+        // Check if this ship is already docked in any dock.
+        int alreadyDocked = 0;
+        for (int i = 0; i < numDocks; i++)
+        {
+            if (docks[i].dockedShip != NULL && docks[i].dockedShip->shipId == ship->shipId)
+            {
+                alreadyDocked = 1;
+                break;
+            }
+        }
+        if (alreadyDocked)
+        {
+            // Skip processing for this ship.
+            continue;
+        }
+
         Dock *freeDock = findBestDock(ship, numDocks, docks);
-        if (freeDock)
+        if ((freeDock && ship->emergency) || (freeDock && (currentTimestep <= ship->timestep + ship->waitingTime)))
         {
             ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
             *shipCopy = *ship;
@@ -290,8 +429,8 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID)
 
             freeDock->dockedShip = shipCopy;
             freeDock->remainingCargo = shipCopy->numCargo; // Initialize remaining cargo
-            freeDock->dockedTimestep = shipCopy->timestep;
-            printf("Assigned waiting Ship ID %d to Dock ID %d with category %d\n", shipCopy->shipId, freeDock->id, freeDock->category);
+            freeDock->dockedTimestep = currentTimestep;
+            printf("Assigned waiting Ship ID %d to Dock ID %d with category %d at timestep %d \n", shipCopy->shipId, freeDock->id, freeDock->category, freeDock->dockedTimestep);
 
             MessageStruct msg;
             msg.mtype = 2;
@@ -302,7 +441,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID)
             usleep(3000);
             if (!msgsnd(validationMsgQID, &msg, sizeof(MessageStruct) - sizeof(long), 0))
             {
-                printf("Sent assignment message for Ship ID %d to Dock %d\n", shipCopy->shipId, freeDock->id);
+                printf("Sent assignment message for Ship ID %d to Dock %d Direction %d\n", shipCopy->shipId, freeDock->id, shipCopy->direction);
             }
             else
             {
@@ -314,6 +453,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID)
         {
             ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
             *shipCopy = *ship;
+
             // No suitable dock found, reinsert the ship and break
             insertPQ(pq, shipCopy);
             break;
@@ -321,7 +461,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID)
     }
 }
 
-void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
+void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, int solverMsgQueues[], int numSolvers)
 {
     printf("\n== New timestep message received (Timestep: %d) ==\n", msg.timestep);
 
@@ -345,11 +485,17 @@ void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, D
     {
         ShipRequest *request = &mainMem->newShipRequests[i];
         printf("Received New Ship Request: ID %d, Category %d\n", request->shipId, request->category);
+        if (request->emergency)
+        {
+            request->waitingTime = -1;
+        }
         insertPQ(pq, request);
     }
 
-    assignWaitingShips(numDocks, docks, validationMsgQID);
-    simulateCargoMovement(numDocks, docks, validationMsgQID, currentTimestep);
+    assignWaitingShips(numDocks, docks, validationMsgQID, currentTimestep);
+
+    ShipRequest shipsToUndock[MAX_DOCKS];
+    simulateCargoMovement(numDocks, docks, validationMsgQID, currentTimestep, shipsToUndock, mainMem, numSolvers, solverMsgQueues);
 
     // Tell validation that go to next timestep
 
@@ -376,7 +522,7 @@ int main(int argc, char *argv[])
     //     return EXIT_FAILURE;
     // }
 
-    int testcase = 3; // atoi(argv[1]);
+    int testcase = 1; // atoi(argv[1]);
 
     char filename[20];
     snprintf(filename, sizeof(filename), "testcase%d/input.txt", testcase);
@@ -451,7 +597,7 @@ int main(int argc, char *argv[])
         switch (msg.mtype)
         {
         case 1:
-            processNewShipRequests(sharedMemKey, msg, numDocks, docks, id, msg.timestep);
+            processNewShipRequests(sharedMemKey, msg, numDocks, docks, id, msg.timestep, solverMsgQKeys, totalSolvers);
             break;
         default:
             printf("Unknown message type: %ld\n", msg.mtype);
