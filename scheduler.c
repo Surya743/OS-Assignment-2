@@ -190,15 +190,40 @@ PriorityQueue *pq;
 Dock *findBestDock(ShipRequest *ship, int numDocks, Dock *docks)
 {
     Dock *bestDock = NULL;
-    int minCategory = INT_MAX;
+    int bestScore = INT_MAX;
 
     for (int i = 0; i < numDocks; i++)
     {
         if (docks[i].assignedShip == -1 && docks[i].category >= ship->category)
         {
-            if (docks[i].category < minCategory)
+            int categoryDiff = docks[i].category - ship->category;
+
+            // Crane stats
+            int sumCap = 0, maxCap = 0, minCap = INT_MAX;
+            for (int c = 0; c < docks[i].category; c++)
             {
-                minCategory = docks[i].category;
+                int cap = docks[i].craneCapacities[c];
+                sumCap += cap;
+                if (cap > maxCap)
+                    maxCap = cap;
+                if (cap < minCap)
+                    minCap = cap;
+            }
+
+            int avgCap = sumCap / docks[i].category;
+            int capSpread = maxCap - minCap;
+
+            /**
+             * Scoring:
+             * - categoryDiff * 100: tight matching category is ideal
+             * - -avgCap * 2: prefer stronger average cranes
+             * - +capSpread: penalize uneven crane distributions slightly
+             */
+            int score = categoryDiff * 100 - avgCap * 2 + capSpread;
+
+            if (score < bestScore)
+            {
+                bestScore = score;
                 bestDock = &docks[i];
             }
         }
@@ -310,47 +335,56 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
                 cranesUsed[c] = 0;
             }
 
-            // For each crane, try to move one eligible cargo
-            for (int c = 0; c < docks[i].category; c++)
+            // For each cargo item, try to assign the best (least waste) eligible crane.
+            for (int k = 0; k < ship->numCargo; k++)
             {
-                if (cranesUsed[c])
-                    continue;
+                if (ship->cargo[k] == -1)
+                    continue; // Already moved
 
-                int craneCap = docks[i].craneCapacities[c];
+                int bestCrane = -1;
+                int bestWaste = INT_MAX;
 
-                // Find a cargo that is not yet serviced and this crane can move
-                for (int k = 0; k < ship->numCargo; k++)
+                for (int c = 0; c < docks[i].category; c++)
                 {
-                    if (ship->cargo[k] != -1 && ship->cargo[k] <= craneCap)
+                    if (!cranesUsed[c] && docks[i].craneCapacities[c] >= ship->cargo[k])
                     {
-                        printf("Dock %d, Crane %d (cap %d) moves cargo item %d (weight %d) from Ship ID %d\n",
-                               i, c, craneCap, k, ship->cargo[k], ship->shipId);
-
-                        MessageStruct msg;
-                        msg.mtype = 4;
-                        msg.dockId = docks[i].id;
-                        msg.shipId = ship->shipId;
-                        msg.cargoId = k;
-                        msg.direction = ship->direction;
-                        msg.craneId = c;
-                        usleep(3000);
-
-                        if (!msgsnd(validationMsgQID, &msg, sizeof(msg) - sizeof(long), 0))
+                        int waste = docks[i].craneCapacities[c] - ship->cargo[k];
+                        if (waste < bestWaste)
                         {
-                            printf("Sent cargo movement message for Ship ID %d, Cargo ID %d to Dock %d\n", ship->shipId, k, i);
+                            bestWaste = waste;
+                            bestCrane = c;
                         }
-                        else
-                        {
-                            perror("Failed to send cargo movement message");
-                            exit(EXIT_FAILURE);
-                        }
-
-                        ship->cargo[k] = -1; // Mark as moved
-                        docks[i].remainingCargo--;
-                        docks[i].lastCargoMovedTimestep = currentTimestep;
-                        cranesUsed[c] = 1;
-                        break; // Move to next crane
                     }
+                }
+
+                if (bestCrane != -1)
+                {
+                    printf("Dock %d, Crane %d (cap %d) moves cargo item %d (weight %d) from Ship ID %d\n",
+                           i, bestCrane, docks[i].craneCapacities[bestCrane], k, ship->cargo[k], ship->shipId);
+
+                    MessageStruct msg;
+                    msg.mtype = 4;
+                    msg.dockId = docks[i].id;
+                    msg.shipId = ship->shipId;
+                    msg.cargoId = k;
+                    msg.direction = ship->direction;
+                    msg.craneId = bestCrane;
+                    usleep(3000);
+
+                    if (!msgsnd(validationMsgQID, &msg, sizeof(msg) - sizeof(long), 0))
+                    {
+                        printf("Sent cargo movement message for Ship ID %d, Cargo ID %d to Dock %d\n", ship->shipId, k, i);
+                    }
+                    else
+                    {
+                        perror("Failed to send cargo movement message");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    ship->cargo[k] = -1; // Mark as moved
+                    docks[i].remainingCargo--;
+                    docks[i].lastCargoMovedTimestep = currentTimestep;
+                    cranesUsed[bestCrane] = 1;
                 }
             }
 
@@ -401,8 +435,8 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
 void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
 {
     // Create temporary arrays to hold ships while we process them
-    ShipRequest *emergencyShips[MAX_NEW_REQUESTS];
-    ShipRequest *regularShips[MAX_NEW_REQUESTS];
+    ShipRequest *emergencyShips[10000];
+    ShipRequest *regularShips[10000];
     int emergencyCount = 0;
     int regularCount = 0;
 
@@ -421,7 +455,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
             if (docks[i].dockedShip != NULL && (docks[i].dockedShip->shipId == ship->shipId && docks[i].dockedDirection == ship->direction))
             {
                 alreadyDocked = 1;
-                break;  // lite
+                break; // lite
             }
         }
 
@@ -531,69 +565,6 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
     }
 }
 
-// void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep)
-// {
-//     while (!isEmptyPQ(pq))
-//     {
-//         ShipRequest *ship = extractMinPQ(pq);
-
-//         // Check if this ship is already docked in any dock.
-//         int alreadyDocked = 0;
-//         for (int i = 0; i < numDocks; i++)
-//         {
-//             if (docks[i].dockedShip != NULL && docks[i].dockedShip->shipId == ship->shipId)
-//             {
-//                 alreadyDocked = 1;
-//                 break;
-//             }
-//         }
-//         if (alreadyDocked)
-//         {
-//             // Skip processing for this ship.
-//             continue;
-//         }
-
-//         Dock *freeDock = findBestDock(ship, numDocks, docks);
-//         if ((freeDock && ship->emergency) || (freeDock && (currentTimestep <= ship->timestep + ship->waitingTime)))
-//         {
-//             ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
-//             *shipCopy = *ship;
-
-//             freeDock->assignedShip = shipCopy->shipId;
-
-//             freeDock->dockedShip = shipCopy;
-//             freeDock->remainingCargo = shipCopy->numCargo; // Initialize remaining cargo
-//             freeDock->dockedTimestep = currentTimestep;
-//             printf("Assigned waiting Ship ID %d to Dock ID %d with category %d at timestep %d \n", shipCopy->shipId, freeDock->id, freeDock->category, freeDock->dockedTimestep);
-
-//             MessageStruct msg;
-//             msg.mtype = 2;
-//             msg.dockId = freeDock->id;
-//             msg.shipId = shipCopy->shipId;
-//             msg.direction = shipCopy->direction;
-
-//             usleep(3000);
-//             if (!msgsnd(validationMsgQID, &msg, sizeof(MessageStruct) - sizeof(long), 0))
-//             {
-//                 printf("Sent assignment message for Ship ID %d to Dock %d Direction %d\n", shipCopy->shipId, freeDock->id, shipCopy->direction);
-//             }
-//             else
-//             {
-//                 perror("Docking failed to send message");
-//                 exit(EXIT_FAILURE);
-//             }
-//         }
-//         else
-//         {
-//             ShipRequest *shipCopy = malloc(sizeof(ShipRequest));
-//             *shipCopy = *ship;
-
-//             // No suitable dock found, reinsert the ship and break
-//             insertPQ(pq, shipCopy);
-//         }
-//     }
-// }
-
 void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, int solverMsgQueues[], int numSolvers)
 {
     printf("\n== New timestep message received (Timestep: %d) ==\n", msg.timestep);
@@ -662,13 +633,13 @@ void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, D
 
 int main(int argc, char *argv[])
 {
-    // if (argc != 2)
-    // {
-    //     fprintf(stderr, "Need testcase number as argument\n");
-    //     return EXIT_FAILURE;
-    // }
+    if (argc != 2)
+    {
+        fprintf(stderr, "Need testcase number as argument\n");
+        return EXIT_FAILURE;
+    }
 
-    int testcase = 2; // atoi(argv[1]);
+    int testcase = atoi(argv[1]);
 
     char filename[20];
     snprintf(filename, sizeof(filename), "testcase%d/input.txt", testcase);
