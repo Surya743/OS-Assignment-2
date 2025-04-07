@@ -1,0 +1,1118 @@
+Dock 2: Category 2, Cranes: 1 4 
+Dock 3: Category 2, Cranes: 2 4 
+Dock 0: Category 3, Cranes: 1 2 4 
+Dock 1: Category 3, Cranes: 1 4 4 
+Shared Memory Key: 91239871
+Main Message Queue Key: 55185607
+Number of Solvers: 4
+Solver 1 Message Queue Key: 50617452
+Solver 2 Message Queue Key: 89670573
+Solver 3 Message Queue Key: 93072482
+Solver 4 Message Queue Key: 54691035
+Number of Docks: 4
+Dock 0 Category: 2
+Crane Capacities: 1 4 
+Dock 1 Category: 2
+Crane Capacities: 2 4 
+Dock 2 Category: 3
+Crane Capacities: 1 2 4 
+Dock 3 Category: 3
+Crane Capacities: 1 4 4 
+
+== New timestep message received (Timestep: 1) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 0, Category 1 Emergency 0 
+ Received New Ship Request: ID 0, Category 2 Emergency 0 
+ Processing Ship ID 0, Category 2, Emergency 0, Waiting Time 0 Direction -1 Timestep 1
+Processing Ship ID 0, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 1
+Ship docked 2 assignedship : -1 
+Found suitable dock 2 for ship 0 Assigned ship : -1
+ Assigned regular Ship ID 0 to Dock ID 2 with category 2 at timestep 1
+Sent assignment message for Ship ID 0 to Dock 2 Direction -1
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 0 Assigned ship : -1
+ Assigned regular Ship ID 0 to Dock ID 3 with category 2 at timestep 1
+Sent assignment message for Ship ID 0 to Dock 3 Direction 1
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 0: Ship ID Parked: -1 at timestep 0 
+Dock 1: Ship ID Parked: -1 at timestep -437378736 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 2) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 1, Category 1 Emergency 0 
+ Received New Ship Request: ID 2, Category 1 Emergency 0 
+ Processing Ship ID 2, Category 1, Emergency 0, Waiting Time 0 Direction -1 Timestep 2
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 2
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 2 Assigned ship : -1
+ Assigned regular Ship ID 2 to Dock ID 0 with category 3 at timestep 2
+Sent assignment message for Ship ID 2 to Dock 0 Direction -1
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : -1 
+Found suitable dock 1 for ship 1 Assigned ship : -1
+ Assigned regular Ship ID 1 to Dock ID 1 with category 3 at timestep 2
+Sent assignment message for Ship ID 1 to Dock 1 Direction -1
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 0 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 0 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 1 (weight 4) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 1 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 0 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 0 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 1 (weight 3) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 1 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 2 
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 3) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 3, Category 1 Emergency 0 
+ Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 2 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 2 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 3 (weight 2) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 3 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 2 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 2 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 3 (weight 3) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 3 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 2 
+Dock 0, Crane 2 (cap 1) moves cargo item 0 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 0 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 1 (weight 3) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 1 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 2 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 2 to Dock 2
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Dock 1, Crane 2 (cap 1) moves cargo item 0 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 0 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 1 (weight 4) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 1 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 2 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 2 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 4) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 1, Category 1 Emergency 0 
+ Received New Ship Request: ID 2, Category 2 Emergency 1 
+ Processing Ship ID 2, Category 2, Emergency 1, Waiting Time -1 Direction 1 Timestep 4
+Emergency Ship ID 2 with category 2
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 4 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 4 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 5 (weight 2) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 5 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 4 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 4 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 5 (weight 3) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 5 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 2 
+Dock 0, Crane 1 (cap 4) moves cargo item 3 (weight 4) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 3 to Dock 2
+Dock 0, Crane 2 (cap 1) moves cargo item 4 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 4 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 5 (weight 2) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 5 to Dock 2
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Dock 1, Crane 2 (cap 1) moves cargo item 3 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 3 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 4 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 4 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 5 (weight 2) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 5 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 5) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 3, Category 3 Emergency 0 
+ Processing Ship ID 2, Category 2, Emergency 1, Waiting Time -1 Direction 1 Timestep 4
+Emergency Ship ID 2 with category 2
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 6 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 6 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 7 (weight 3) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 7 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 6 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 6 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 7 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 7 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 2 
+Dock 0, Crane 2 (cap 1) moves cargo item 6 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 6 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 7 (weight 3) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 7 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 8 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 8 to Dock 2
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Dock 1, Crane 2 (cap 1) moves cargo item 6 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 6 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 7 (weight 4) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 7 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 8 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 8 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 6) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 4, Category 2 Emergency 0 
+ Processing Ship ID 2, Category 2, Emergency 1, Waiting Time -1 Direction 1 Timestep 4
+Emergency Ship ID 2 with category 2
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 8 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 8 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 9 (weight 3) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 9 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 8 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 8 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 9 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 9 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 2 
+Dock 0, Crane 0 (cap 2) moves cargo item 9 (weight 2) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 9 to Dock 2
+Dock 0, Crane 2 (cap 1) moves cargo item 10 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 10 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 11 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 11 to Dock 2
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Dock 1, Crane 2 (cap 1) moves cargo item 9 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 9 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 10 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 10 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 11 (weight 2) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 11 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 7) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 4, Category 1 Emergency 0 
+ Received New Ship Request: ID 5, Category 2 Emergency 0 
+ Processing Ship ID 2, Category 2, Emergency 1, Waiting Time -1 Direction 1 Timestep 4
+Emergency Ship ID 2 with category 2
+Processing Ship ID 5, Category 2, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 4, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 10 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 10 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 11 (weight 2) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 11 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 10 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 10 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 11 (weight 4) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 11 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 2 
+Ship ID 2 finished unloading at Dock 0 and undocks.
+✅ Correct guess: 87.6
+Generated auth string for Ship ID 2: 87.6
+Sent undocking message for Ship ID 2 to Dock 0
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Dock 1, Crane 2 (cap 1) moves cargo item 12 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 12 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 13 (weight 3) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 13 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 8) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 6, Category 1 Emergency 0 
+ Processing Ship ID 2, Category 2, Emergency 1, Waiting Time -1 Direction 1 Timestep 4
+Emergency Ship ID 2 with category 2
+Processing Ship ID 5, Category 2, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 4, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 2 Assigned ship : -1
+ Assigned emergency Ship ID 2 to Dock ID 0 with category 3 at timestep 8
+Sent assignment message for emergency Ship ID 2 to Dock 0 Direction 1
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 1 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Dock 2, Crane 0 (cap 1) moves cargo item 12 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 12 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 13 (weight 4) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 13 to Dock 0
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Dock 3, Crane 0 (cap 2) moves cargo item 12 (weight 1) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 12 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 13 (weight 4) from Ship ID 0
+Sent cargo movement message for Ship ID 0, Cargo ID 13 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 8 
+Dock 1: Ship ID Parked: 1 at timestep 2 
+Ship ID 1 finished unloading at Dock 1 and undocks.
+✅ Correct guess: 76.57
+Generated auth string for Ship ID 1: 76.57
+Sent undocking message for Ship ID 1 to Dock 1
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 9) ==
+Attached shared memory for new requests
+Processing Ship ID 5, Category 2, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 4, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : -1 
+Found suitable dock 1 for ship 5 Assigned ship : -1
+ Assigned regular Ship ID 5 to Dock ID 1 with category 3 at timestep 9
+Sent assignment message for Ship ID 5 to Dock 1 Direction 1
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 0 
+Ship docked 3 assignedship : 0 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 0 at timestep 1 
+Ship ID 0 finished unloading at Dock 2 and undocks.
+✅ Correct guess: 6.58..7
+Generated auth string for Ship ID 0: 6.58..7
+Sent undocking message for Ship ID 0 to Dock 2
+Dock 3: Ship ID Parked: 0 at timestep 1 
+Ship ID 0 finished unloading at Dock 3 and undocks.
+✅ Correct guess: 869.577
+Generated auth string for Ship ID 0: 869.577
+Sent undocking message for Ship ID 0 to Dock 3
+Dock 0: Ship ID Parked: 2 at timestep 8 
+Dock 0, Crane 2 (cap 1) moves cargo item 0 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 0 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 1 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 1 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 2 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 2 to Dock 2
+Dock 1: Ship ID Parked: 5 at timestep 9 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 10) ==
+Attached shared memory for new requests
+Processing Ship ID 4, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 7
+Processing Ship ID 1, Category 1, Emergency 0, Waiting Time 6 Direction 1 Timestep 4
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : -1 
+Found suitable dock 2 for ship 4 Assigned ship : -1
+ Assigned regular Ship ID 4 to Dock ID 2 with category 2 at timestep 10
+Sent assignment message for Ship ID 4 to Dock 2 Direction 1
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 1 Assigned ship : -1
+ Assigned regular Ship ID 1 to Dock ID 3 with category 2 at timestep 10
+Sent assignment message for Ship ID 1 to Dock 3 Direction 1
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 0: Ship ID Parked: 2 at timestep 8 
+Dock 0, Crane 0 (cap 2) moves cargo item 3 (weight 2) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 3 to Dock 2
+Dock 0, Crane 2 (cap 1) moves cargo item 4 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 4 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 5 (weight 2) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 5 to Dock 2
+Dock 1: Ship ID Parked: 5 at timestep 9 
+Dock 1, Crane 2 (cap 1) moves cargo item 0 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 0 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 1 (weight 2) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 1 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 2 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 2 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 11) ==
+Attached shared memory for new requests
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Dock 2, Crane 0 (cap 1) moves cargo item 0 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 0 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 1 (weight 2) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 1 to Dock 0
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 0 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 0 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 1 (weight 3) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 1 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 8 
+Dock 0, Crane 2 (cap 1) moves cargo item 6 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 6 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 7 (weight 4) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 7 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 8 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 8 to Dock 2
+Dock 1: Ship ID Parked: 5 at timestep 9 
+Dock 1, Crane 1 (cap 4) moves cargo item 3 (weight 3) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 3 to Dock 3
+Dock 1, Crane 2 (cap 1) moves cargo item 4 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 4 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 5 (weight 3) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 5 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 12) ==
+Attached shared memory for new requests
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Dock 2, Crane 0 (cap 1) moves cargo item 2 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 2 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 3 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 3 to Dock 0
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 2 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 2 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 3 (weight 3) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 3 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 8 
+Dock 0, Crane 1 (cap 4) moves cargo item 9 (weight 4) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 9 to Dock 2
+Dock 0, Crane 2 (cap 1) moves cargo item 10 (weight 1) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 10 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 11 (weight 2) from Ship ID 2
+Sent cargo movement message for Ship ID 2, Cargo ID 11 to Dock 2
+Dock 1: Ship ID Parked: 5 at timestep 9 
+Dock 1, Crane 2 (cap 1) moves cargo item 6 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 6 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 7 (weight 2) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 7 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 8 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 8 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 13) ==
+Attached shared memory for new requests
+Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 2 
+Ship docked 1 assignedship : 5 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Dock 2, Crane 0 (cap 1) moves cargo item 4 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 4 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 5 (weight 3) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 5 to Dock 0
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 4 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 4 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 5 (weight 2) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 5 to Dock 1
+Dock 0: Ship ID Parked: 2 at timestep 8 
+Ship ID 2 finished unloading at Dock 0 and undocks.
+✅ Correct guess: 86.9
+Generated auth string for Ship ID 2: 86.9
+Sent undocking message for Ship ID 2 to Dock 0
+Dock 1: Ship ID Parked: 5 at timestep 9 
+Dock 1, Crane 2 (cap 1) moves cargo item 9 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 9 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 10 (weight 1) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 10 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 11 (weight 2) from Ship ID 5
+Sent cargo movement message for Ship ID 5, Cargo ID 11 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 14) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 3, Category 3 Emergency 0 
+ Processing Ship ID 4, Category 2, Emergency 0, Waiting Time 7 Direction -1 Timestep 6
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 14
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 4 Assigned ship : -1
+ Assigned regular Ship ID 4 to Dock ID 0 with category 3 at timestep 14
+Sent assignment message for Ship ID 4 to Dock 0 Direction -1
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 5 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 5 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Dock 2, Crane 0 (cap 1) moves cargo item 6 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 6 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 7 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 7 to Dock 0
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 6 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 6 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 7 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 7 to Dock 1
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 1: Ship ID Parked: 5 at timestep 9 
+Ship ID 5 finished unloading at Dock 1 and undocks.
+✅ Correct guess: 6..6
+Generated auth string for Ship ID 5: 6..6
+Sent undocking message for Ship ID 5 to Dock 1
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 15) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 14
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : -1 
+Found suitable dock 1 for ship 3 Assigned ship : -1
+ Assigned regular Ship ID 3 to Dock ID 1 with category 3 at timestep 15
+Sent assignment message for Ship ID 3 to Dock 1 Direction 1
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Dock 2, Crane 0 (cap 1) moves cargo item 8 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 8 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 9 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 9 to Dock 0
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 8 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 8 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 9 (weight 3) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 9 to Dock 1
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 0, Crane 2 (cap 1) moves cargo item 0 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 0 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 1 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 1 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 2 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 2 to Dock 2
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 16) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 3, Category 1, Emergency 0, Waiting Time 7 Direction -1 Timestep 3
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 4 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 4 at timestep 10 
+Ship ID 4 finished unloading at Dock 2 and undocks.
+✅ Correct guess: 7..75
+Generated auth string for Ship ID 4: 7..75
+Sent undocking message for Ship ID 4 to Dock 2
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 10 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 10 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 11 (weight 2) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 11 to Dock 1
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 0, Crane 0 (cap 2) moves cargo item 3 (weight 2) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 3 to Dock 2
+Dock 0, Crane 2 (cap 1) moves cargo item 4 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 4 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 5 (weight 2) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 5 to Dock 2
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 2 (cap 1) moves cargo item 0 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 0 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 1 (weight 3) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 1 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 2 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 2 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 17) ==
+Attached shared memory for new requests
+Received New Ship Request: ID 6, Category 1 Emergency 0 
+ Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 17
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : -1 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : -1 
+Found suitable dock 2 for ship 6 Assigned ship : -1
+ Assigned regular Ship ID 6 to Dock ID 2 with category 2 at timestep 17
+Sent assignment message for Ship ID 6 to Dock 2 Direction 1
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Dock 3, Crane 0 (cap 2) moves cargo item 12 (weight 1) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 12 to Dock 1
+Dock 3, Crane 1 (cap 4) moves cargo item 13 (weight 3) from Ship ID 1
+Sent cargo movement message for Ship ID 1, Cargo ID 13 to Dock 1
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 0, Crane 2 (cap 1) moves cargo item 6 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 6 to Dock 2
+Dock 0, Crane 1 (cap 4) moves cargo item 7 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 7 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 8 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 8 to Dock 2
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 2 (cap 1) moves cargo item 3 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 3 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 4 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 4 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 5 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 5 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 18) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : 1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 0 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 0 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 1 (weight 2) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 1 to Dock 0
+Dock 3: Ship ID Parked: 1 at timestep 10 
+Ship ID 1 finished unloading at Dock 3 and undocks.
+✅ Correct guess: 5.8.765
+Generated auth string for Ship ID 1: 5.8.765
+Sent undocking message for Ship ID 1 to Dock 3
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 0, Crane 1 (cap 4) moves cargo item 9 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 9 to Dock 2
+Dock 0, Crane 2 (cap 1) moves cargo item 10 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 10 to Dock 2
+Dock 0, Crane 0 (cap 2) moves cargo item 12 (weight 1) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 12 to Dock 2
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 1 (cap 4) moves cargo item 6 (weight 2) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 6 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 7 (weight 3) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 7 to Dock 3
+Dock 1, Crane 2 (cap 1) moves cargo item 8 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 8 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 19) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 2 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 2 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 3 (weight 2) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 3 to Dock 0
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 0, Crane 1 (cap 4) moves cargo item 11 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 11 to Dock 2
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 1 (cap 4) moves cargo item 9 (weight 2) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 9 to Dock 3
+Dock 1, Crane 2 (cap 1) moves cargo item 10 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 10 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 11 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 11 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 20) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 4 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 4 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 5 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 5 to Dock 0
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Dock 0, Crane 1 (cap 4) moves cargo item 13 (weight 4) from Ship ID 4
+Sent cargo movement message for Ship ID 4, Cargo ID 13 to Dock 2
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 2 (cap 1) moves cargo item 12 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 12 to Dock 3
+Dock 1, Crane 1 (cap 4) moves cargo item 13 (weight 4) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 13 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 14 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 14 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 21) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : 4 
+Ship docked 1 assignedship : 3 
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 6 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 6 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 7 (weight 2) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 7 to Dock 0
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: 4 at timestep 14 
+Ship ID 4 finished unloading at Dock 0 and undocks.
+✅ Correct guess: 7..575
+Generated auth string for Ship ID 4: 7..575
+Sent undocking message for Ship ID 4 to Dock 0
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 1 (cap 4) moves cargo item 15 (weight 2) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 15 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 16 (weight 4) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 16 to Dock 3
+Dock 1, Crane 2 (cap 1) moves cargo item 17 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 17 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 22) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 3 Assigned ship : -1
+ Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 8 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 8 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 9 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 9 to Dock 0
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: -1 at timestep 14 
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Dock 1, Crane 1 (cap 4) moves cargo item 18 (weight 2) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 18 to Dock 3
+Dock 1, Crane 0 (cap 4) moves cargo item 19 (weight 2) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 19 to Dock 3
+Dock 1, Crane 2 (cap 1) moves cargo item 20 (weight 1) from Ship ID 3
+Sent cargo movement message for Ship ID 3, Cargo ID 20 to Dock 3
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 23) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 3 Assigned ship : -1
+ Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 10 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 10 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 11 (weight 4) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 11 to Dock 0
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: -1 at timestep 14 
+Dock 1: Ship ID Parked: 3 at timestep 15 
+Ship ID 3 finished unloading at Dock 1 and undocks.
+✅ Correct guess: 78..7.5
+Generated auth string for Ship ID 3: 78..7.5
+Sent undocking message for Ship ID 3 to Dock 1
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 24) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 3 Assigned ship : -1
+ Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Dock 2, Crane 0 (cap 1) moves cargo item 12 (weight 1) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 12 to Dock 0
+Dock 2, Crane 1 (cap 4) moves cargo item 13 (weight 3) from Ship ID 6
+Sent cargo movement message for Ship ID 6, Cargo ID 13 to Dock 0
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: -1 at timestep 14 
+Dock 1: Ship ID Parked: -1 at timestep 15 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 25) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 3 Assigned ship : -1
+ Ship docked 2 assignedship : 6 
+Ship docked 3 assignedship : -1 
+Found suitable dock 3 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: 6 at timestep 17 
+Ship ID 6 finished unloading at Dock 2 and undocks.
+✅ Correct guess: 5.88.59
+Generated auth string for Ship ID 6: 5.88.59
+Sent undocking message for Ship ID 6 to Dock 2
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: -1 at timestep 14 
+Dock 1: Ship ID Parked: -1 at timestep 15 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 26) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : -1 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 3 Assigned ship : -1
+ Ship docked 2 assignedship : -1 
+Found suitable dock 2 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: -1 at timestep 17 
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: -1 at timestep 14 
+Dock 1: Ship ID Parked: -1 at timestep 15 
+Sent message to validation to go to next timestep
+
+== New timestep message received (Timestep: 27) ==
+Attached shared memory for new requests
+Processing Ship ID 3, Category 3, Emergency 0, Waiting Time 7 Direction 1 Timestep 5
+Processing Ship ID 6, Category 1, Emergency 0, Waiting Time 7 Direction 1 Timestep 8
+Ship docked 2 assignedship : -1 
+Ship docked 3 assignedship : -1 
+Ship docked 0 assignedship : -1 
+Found suitable dock 0 for ship 3 Assigned ship : -1
+ Ship docked 2 assignedship : -1 
+Found suitable dock 2 for ship 6 Assigned ship : -1
+ 
+-- Simulating cargo movement for current timestep --
+Dock 2: Ship ID Parked: -1 at timestep 17 
+Dock 3: Ship ID Parked: -1 at timestep 10 
+Dock 0: Ship ID Parked: -1 at timestep 14 
+Dock 1: Ship ID Parked: -1 at timestep 15 
+Sent message to validation to go to next timestep
+

@@ -1,0 +1,52 @@
+Successfully docked outgoing ship with ship id 0 at dock 2 at timestep 1.
+Successfully docked incoming ship with ship id 0 at dock 3 at timestep 1.
+Ending timestep 1.
+Successfully docked outgoing ship with ship id 2 at dock 0 at timestep 2.
+Successfully docked outgoing ship with ship id 1 at dock 1 at timestep 2.
+Ending timestep 2.
+Ending timestep 3.
+Ending timestep 4.
+Ending timestep 5.
+Ending timestep 6.
+Successfully undocked outgoing ship with ship id 2 from dock 0 at timestep 7.
+Ending timestep 7.
+Successfully docked incoming ship with ship id 2 at dock 0 at timestep 8.
+Successfully undocked outgoing ship with ship id 1 from dock 1 at timestep 8.
+Ending timestep 8.
+Successfully docked incoming ship with ship id 5 at dock 1 at timestep 9.
+Successfully undocked outgoing ship with ship id 0 from dock 2 at timestep 9.
+Successfully undocked incoming ship with ship id 0 from dock 3 at timestep 9.
+Ending timestep 9.
+Successfully docked incoming ship with ship id 4 at dock 2 at timestep 10.
+Successfully docked incoming ship with ship id 1 at dock 3 at timestep 10.
+Ending timestep 10.
+Ending timestep 11.
+Ending timestep 12.
+Ending timestep 13.
+Successfully undocked incoming ship with ship id 2 from dock 0 at timestep 14.
+Ending timestep 14.
+Successfully docked outgoing ship with ship id 4 at dock 0 at timestep 15.
+Successfully undocked incoming ship with ship id 5 from dock 1 at timestep 15.
+Ending timestep 15.
+Successfully docked incoming ship with ship id 3 at dock 1 at timestep 16.
+Successfully undocked incoming ship with ship id 4 from dock 2 at timestep 16.
+Ending timestep 16.
+Successfully docked incoming ship with ship id 6 at dock 2 at timestep 17.
+Ending timestep 17.
+Successfully undocked incoming ship with ship id 1 from dock 3 at timestep 18.
+Ending timestep 18.
+Successfully docked outgoing ship with ship id 3 at dock 3 at timestep 19.
+Ending timestep 19.
+Ending timestep 20.
+Ending timestep 21.
+Successfully undocked outgoing ship with ship id 4 from dock 0 at timestep 22.
+Ending timestep 22.
+Ending timestep 23.
+Successfully undocked incoming ship with ship id 3 from dock 1 at timestep 24.
+Ending timestep 24.
+Successfully undocked incoming ship with ship id 6 from dock 2 at timestep 25.
+Ending timestep 25.
+Successfully undocked outgoing ship with ship id 3 from dock 3 at timestep 26.
+Ending timestep 26.
+All ships have been serviced in 55 seconds(in real time).
+Completed in 27 timesteps.
