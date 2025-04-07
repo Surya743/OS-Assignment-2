@@ -8,6 +8,7 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <limits.h>
+#include <ctype.h>
 #define MAX_CRANES 30
 #define MAX_DOCKS 30
 #define MAX_CARGO_COUNT 200
@@ -232,14 +233,19 @@ Dock *findBestDock(ShipRequest *ship, int numDocks, Dock *docks)
     return bestDock;
 }
 
+#include <ctype.h>  // For isdigit() function
+
 int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, SolverRequest *req, SolverResponse *resp, char *authString)
 {
-    // First: try digits
+    // First: Try digits and dots (no need to exclude charset items here)
     for (int i = 0; i < charsetSize; ++i)
     {
         char c = charset[i];
-        if (c < '0' || c > '9') continue; // skip non-digits here
 
+        // Skip non-digits and non-dots
+        if (!(isdigit(c) || c == '.')) continue;
+
+        // Skip invalid first/last characters for dots
         if ((pos == 0 || pos == length - 1) && c == '.')
             continue;
 
@@ -247,23 +253,28 @@ int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, Sol
 
         if (pos == length - 1)
         {
-            guess[length] = '\0';
+            guess[length] = '\0';  // Null-terminate the guess
+
+            // Prepare request with the current guess
             strncpy(req->authStringGuess, guess, MAX_AUTH_STRING_LEN);
             req->dockId = dockId;
             req->mtype = 2;
 
+            // Send the request
             if (msgsnd(msgqid, req, sizeof(SolverRequest) - sizeof(long), 0) == -1)
             {
                 perror("msgsnd");
                 exit(1);
             }
 
+            // Receive the response
             if (msgrcv(msgqid, resp, sizeof(SolverResponse) - sizeof(long), 3, 0) == -1)
             {
                 perror("msgrcv");
                 exit(1);
             }
 
+            // If correct guess is found, return success
             if (resp->guessIsCorrect == 1)
             {
                 printf("Correct guess found: %s\n", guess);
@@ -273,17 +284,21 @@ int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, Sol
         }
         else
         {
+            // Recursive call to explore next position
             if (backtrackGuess(guess, pos + 1, length, dockId, msgqid, req, resp, authString))
-                return 1;
+                return 1; // Bubble up success
         }
     }
 
-    // Then: try non-digits
+    // Then: Try everything else in the charset (non-digits, non-dots)
     for (int i = 0; i < charsetSize; ++i)
     {
         char c = charset[i];
-        if (c >= '0' && c <= '9') continue; // already tried digits
 
+        // Skip digits and dots already handled in the previous loop
+        if (isdigit(c) || c == '.') continue;
+
+        // Skip invalid first/last characters for dots
         if ((pos == 0 || pos == length - 1) && c == '.')
             continue;
 
@@ -291,23 +306,28 @@ int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, Sol
 
         if (pos == length - 1)
         {
-            guess[length] = '\0';
+            guess[length] = '\0';  // Null-terminate the guess
+
+            // Prepare request with the current guess
             strncpy(req->authStringGuess, guess, MAX_AUTH_STRING_LEN);
             req->dockId = dockId;
             req->mtype = 2;
 
+            // Send the request
             if (msgsnd(msgqid, req, sizeof(SolverRequest) - sizeof(long), 0) == -1)
             {
                 perror("msgsnd");
                 exit(1);
             }
 
+            // Receive the response
             if (msgrcv(msgqid, resp, sizeof(SolverResponse) - sizeof(long), 3, 0) == -1)
             {
                 perror("msgrcv");
                 exit(1);
             }
 
+            // If correct guess is found, return success
             if (resp->guessIsCorrect == 1)
             {
                 printf("Correct guess found: %s\n", guess);
@@ -317,13 +337,17 @@ int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, Sol
         }
         else
         {
+            // Recursive call to explore next position
             if (backtrackGuess(guess, pos + 1, length, dockId, msgqid, req, resp, authString))
-                return 1;
+                return 1; // Bubble up success
         }
     }
 
-    return 0;
+    return 0; // No correct guess found in this path
 }
+
+
+
 
 
 void generateAndSendGuesses(int length, int dockId, int msgkey, char *authString, int *solverMsgQ, int numSolvers)
