@@ -8,6 +8,8 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <limits.h>
+#include <pthread.h>
+#include <math.h>
 #define MAX_CRANES 30
 #define MAX_DOCKS 30
 #define MAX_CARGO_COUNT 200
@@ -90,112 +92,163 @@ Dock *findBestDock(ShipRequest *ship, int numDocks, Dock *docks)
 {
     for (int i = 0; i < numDocks; i++)
     {
-        printf("Ship docked %d assignedship : %d \n", docks[i].id, docks[i].assignedShip);
         if (docks[i].assignedShip == -1 && docks[i].category >= ship->category)
         {
-            printf("Found suitable dock %d for ship %d Assigned ship : %d\n ", docks[i].id, ship->shipId, docks[i].assignedShip);
+            // printf("Found suitable dock %d for ship %d Assigned ship : %d\n ", docks[i].id, ship->shipId, docks[i].assignedShip);
             return &docks[i]; // First suitable dock in sorted list
         }
     }
     return NULL; // No suitable dock found
 }
 
-int backtrackGuess(char *guess, int pos, int length, int dockId, int msgqid, SolverRequest *req, SolverResponse *resp, char *authString)
-{
-    for (int i = 0; i < charsetSize; ++i)
-    {
-        char c = charset[i];
+#define finalCharStartIdx 0
 
-        // Skip invalid first/last characters
-        if ((pos == 0 || pos == length - 1) && c == '.')
+// Thread arguments structure
+typedef struct
+{
+    int threadIndex;
+    int totalThreads;
+    int length;
+    int dockId;
+    int msgqid;
+    char *authString;
+    volatile int *found;
+    pthread_mutex_t *lock;
+} ThreadArgs;
+
+// Flat brute-force approach with prefix bucketing
+void *solverThreadIterative(void *arg)
+{
+    ThreadArgs *args = (ThreadArgs *)arg;
+    char guess[MAX_AUTH_STRING_LEN + 1];
+    int maxLen = args->length;
+
+    // Total prefix combinations (excluding the last char)
+    long totalPrefixes = 1;
+    for (int i = 0; i < maxLen - 1; i++)
+        totalPrefixes *= charsetSize;
+
+    // Calculate the range of prefix indices this thread should process
+    long startIdx = (totalPrefixes / args->totalThreads) * args->threadIndex;
+    long endIdx = (totalPrefixes / args->totalThreads) * (args->threadIndex + 1);
+    if (args->threadIndex == args->totalThreads - 1)
+    {
+        endIdx = totalPrefixes; // Make sure the last thread processes all remaining prefixes
+    }
+
+    for (long prefixIndex = startIdx; prefixIndex < endIdx && !*args->found; prefixIndex++)
+    {
+        long temp = prefixIndex;
+        for (int pos = 0; pos < maxLen - 1; pos++)
+        {
+            guess[pos] = charset[temp % charsetSize];
+            temp /= charsetSize;
+        }
+
+        // Prune bad prefix (e.g., if starts with '.')
+        if (guess[0] == '.')
             continue;
 
-        guess[pos] = c;
-
-        if (pos == length - 1)
+        // Now brute-force the final character
+        for (int i = finalCharStartIdx; i < charsetSize && !*args->found; i++)
         {
-            guess[length] = '\0';
-            strncpy(req->authStringGuess, guess, MAX_AUTH_STRING_LEN);
-            req->dockId = dockId;
-            req->mtype = 2;
+            guess[maxLen - 1] = charset[i];
+            guess[maxLen] = '\0';
 
-            // Send request
-            if (msgsnd(msgqid, req, sizeof(SolverRequest) - sizeof(long), 0) == -1)
+            SolverRequest req = {.mtype = 2, .dockId = args->dockId};
+            strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
+
+            if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1)
             {
                 perror("msgsnd");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
 
-            // Receive response
-            if (msgrcv(msgqid, resp, sizeof(SolverResponse) - sizeof(long), 3, 0) == -1)
+            SolverResponse resp;
+            if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1)
             {
                 perror("msgrcv");
-                exit(1);
+                exit(EXIT_FAILURE);
             }
 
-            if (resp->guessIsCorrect == 1)
+            if (resp.guessIsCorrect)
             {
-                printf("Correct guess found: %s\n", guess);
-                strncpy(authString, guess, MAX_AUTH_STRING_LEN);
-                return 1; // signal to stop recursion
+                pthread_mutex_lock(args->lock);
+                if (!*args->found)
+                {
+                    *args->found = 1;
+                    strncpy(args->authString, guess, MAX_AUTH_STRING_LEN);
+                }
+                pthread_mutex_unlock(args->lock);
+                return NULL;
             }
-        }
-        else
-        {
-            if (backtrackGuess(guess, pos + 1, length, dockId, msgqid, req, resp, authString))
-                return 1; // bubble up success
         }
     }
 
-    return 0; // no correct guess found in this path
+    return NULL;
 }
 
-void generateAndSendGuesses(int length, int dockId, int msgkey, char *authString, int *solverMsgQ, int numSolvers)
+// Top-level function to launch prefix-bucketed brute force
+void generateAndSendGuesses(int length, int dockId, char *authString, int *solverMsgQ, int numSolvers)
 {
-    char guess[MAX_AUTH_STRING_LEN];
-    int msgqid = msgget(msgkey, IPC_CREAT | 0666);
-    if (msgqid == -1)
-    {
-        perror("msgget");
-        exit(EXIT_FAILURE);
-    }
-    SolverRequest preReq;
-
-    preReq.mtype = 1;
-    preReq.dockId = dockId;
-
+    SolverRequest preReq = {.mtype = 1, .dockId = dockId};
     usleep(3000);
+
+    int solverMsgIDs[numSolvers];
     for (int i = 0; i < numSolvers; i++)
     {
         int solver_q = msgget(solverMsgQ[i], IPC_CREAT | 0666);
+        solverMsgIDs[i] = solver_q;
         if (msgsnd(solver_q, &preReq, sizeof(preReq) - sizeof(long), 0) == -1)
         {
-            perror("Error sending msg for solver\n");
+            perror("msgsnd");
             exit(EXIT_FAILURE);
         }
     }
 
-    SolverRequest req;
-    SolverResponse resp;
+    pthread_t threads[numSolvers];
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    volatile int found = 0;
+    ThreadArgs args[numSolvers];
 
-    req.mtype = 2;
-    req.dockId = dockId;
+    // Create threads for solving
+    for (int i = 0; i < numSolvers; i++)
+    {
+        args[i] = (ThreadArgs){
+            .threadIndex = i,
+            .totalThreads = numSolvers,
+            .length = length,
+            .dockId = dockId,
+            .msgqid = solverMsgIDs[i],
+            .authString = authString,
+            .found = &found,
+            .lock = &lock};
 
-    backtrackGuess(guess, 0, length, dockId, msgqid, &req, &resp, authString);
+        if (pthread_create(&threads[i], NULL, solverThreadIterative, &args[i]) != 0)
+        {
+            perror("pthread_create");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    for (int i = 0; i < numSolvers; i++)
+        pthread_join(threads[i], NULL);
+
+    pthread_mutex_destroy(&lock);
 }
 
 void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, ShipRequest *shipsToUndock, MainSharedMemory *mainMem, int numSolvers, int solverMsgQ[])
 {
-    printf("\n-- Simulating cargo movement for current timestep --\n");
+    // printf("\n-- Simulating cargo movement for current timestep --\n");
 
     int countOfshipsToUndock = 0;
     for (int i = 0; i < numDocks; i++)
     {
-        printf("Dock %d: Ship ID Parked: %d at timestep %d \n", docks[i].id, docks[i].assignedShip, docks[i].dockedTimestep);
+        // printf("Dock %d: Ship ID Parked: %d at timestep %d \n", docks[i].id, docks[i].assignedShip, docks[i].dockedTimestep);
         if (docks[i].assignedShip != -1 && docks[i].dockedShip != NULL && docks[i].dockedTimestep < currentTimestep)
         {
             ShipRequest *ship = docks[i].dockedShip;
-            // printf("Docked Ship ID %d at Dock %d with category %d\n", ship->shipId, docks[i].id, ship->category);
+            // ////printf("Docked Ship ID %d at Dock %d with category %d\n", ship->shipId, docks[i].id, ship->category);
             // Track which cranes have been used in this timestep
             int cranesUsed[docks[i].category];
             for (int c = 0; c < docks[i].category; c++)
@@ -224,8 +277,7 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
                 {
                     int originalCraneIndex = docks[i].craneOriginalIndices[bestCrane];
 
-                    printf("Dock %d, Crane %d (cap %d) moves cargo item %d (weight %d) from Ship ID %d\n",
-                           docks[i].id, originalCraneIndex, docks[i].craneCapacities[bestCrane], k, ship->cargo[k], ship->shipId);
+                    // printf("Dock %d, Crane %d (cap %d) moves cargo item %d (weight %d) from Ship ID %d\n", docks[i].id, originalCraneIndex, docks[i].craneCapacities[bestCrane], k, ship->cargo[k], ship->shipId);
 
                     MessageStruct msg;
                     msg.mtype = 4;
@@ -238,7 +290,7 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
 
                     if (!msgsnd(validationMsgQID, &msg, sizeof(msg) - sizeof(long), 0))
                     {
-                        printf("Sent cargo movement message for Ship ID %d, Cargo ID %d to Dock %d\n", ship->shipId, k, i);
+                        // printf("Sent cargo movement message for Ship ID %d, Cargo ID %d to Dock %d\n", ship->shipId, k, i);
                     }
                     else
                     {
@@ -256,7 +308,7 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
             // If all cargo is moved, undock the ship
             if (docks[i].remainingCargo <= 0 && docks[i].lastCargoMovedTimestep < currentTimestep)
             {
-                printf("Ship ID %d finished unloading at Dock %d and undocks.\n", ship->shipId, docks[i].id);
+                // printf("Ship ID %d finished unloading at Dock %d and undocks.\n", ship->shipId, docks[i].id);
                 docks[i].assignedShip = -1;
                 docks[i].dockedShip = NULL;
                 docks[i].remainingCargo = 0;
@@ -269,8 +321,8 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
 
                 int authStringLength = docks[i].lastCargoMovedTimestep - docks[i].dockedTimestep;
                 char authString[MAX_AUTH_STRING_LEN];
-                generateAndSendGuesses(authStringLength, docks[i].id, solverMsgQ[0], authString, solverMsgQ, numSolvers);
-                printf("Generated auth string for Ship ID %d: %s\n", ship->shipId, authString);
+                generateAndSendGuesses(authStringLength, docks[i].id, authString, solverMsgQ, numSolvers);
+                // printf("Generated auth string for Ship ID %d: %s\n", ship->shipId, authString);
 
                 // Remove \0 from authString
 
@@ -285,7 +337,7 @@ void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int 
                 usleep(3000);
                 if (!msgsnd(validationMsgQID, &msg, sizeof(msg) - sizeof(long), 0))
                 {
-                    printf("Sent undocking message for Ship ID %d to Dock %d\n", ship->shipId, docks[i].id);
+                    // printf("Sent undocking message for Ship ID %d to Dock %d\n", ship->shipId, docks[i].id);
                 }
                 else
                 {
@@ -308,7 +360,7 @@ void assignShipToDock(Dock *dock, ShipRequest *ship, int currentTimestep, int ms
     dock->dockedDirection = ship->direction;
     dock->dockedTimestep = currentTimestep;
 
-    printf("Assigned Ship ID %d to Dock ID %d (Emergency: %d)\n", ship->shipId, dock->id, ship->emergency);
+    // printf("Assigned Ship ID %d to Dock ID %d (Emergency: %d)\n", ship->shipId, dock->id, ship->emergency);
 
     MessageStruct msg = {
         .mtype = 2,
@@ -344,12 +396,11 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
     // Sort all ships based on priority
     qsort(waitingShips, waitingShipCount, sizeof(ShipRequest *), compareQueueShips);
 
-    printf("---- All Sorted Ships ----\n");
+    // printf("---- All Sorted Ships ----\n");
     for (int i = 0; i < waitingShipCount; i++)
     {
         ShipRequest *s = waitingShips[i];
-        printf("Ship ID %d Dir %d Timestep %d Waiting %d Emergency %d\n",
-               s->shipId, s->direction, s->timestep, s->waitingTime, s->emergency);
+        // printf("Ship ID %d Dir %d Timestep %d Waiting %d Emergency %d Category %d \n", s->shipId, s->direction, s->timestep, s->waitingTime, s->emergency, s->category);
     }
 
     ShipRequest *newWaitingShips[10000];
@@ -410,7 +461,7 @@ void assignWaitingShips(int numDocks, Dock *docks, int validationMsgQID, int cur
 
 void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, int solverMsgQueues[], int numSolvers)
 {
-    printf("\n== New timestep message received (Timestep: %d) ==\n", msg.timestep);
+    // printf("\n== New timestep message received (Timestep: %d) ==\n", msg.timestep);
 
     // Attach shared memory and process new ship requests.
     int id = shmget(sharedMemKey, sizeof(MainSharedMemory), IPC_CREAT | 0666);
@@ -425,7 +476,7 @@ void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, D
         perror("shmat");
         return;
     }
-    printf("Attached shared memory for new requests\n");
+    // printf("Attached shared memory for new requests\n");
 
     for (int i = 0; i < msg.numShipRequests; i++)
     {
@@ -452,7 +503,7 @@ void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, D
 
     if (!msgsnd(validationMsgQID, &msgToValidation, sizeof(msgToValidation) - sizeof(long), 0))
     {
-        printf("Sent message to validation to go to next timestep\n");
+        // printf("Sent message to validation to go to next timestep\n");
     }
     else
     {
@@ -463,13 +514,13 @@ void processNewShipRequests(int sharedMemKey, MessageStruct msg, int numDocks, D
 
 int main(int argc, char *argv[])
 {
-    // if (argc != 2)
-    // {
-    //     fprintf(stderr, "Need testcase number as argument\n");
-    //     return EXIT_FAILURE;
-    // }
+    if (argc != 2)
+    {
+        fprintf(stderr, "Need testcase number as argument\n");
+        return EXIT_FAILURE;
+    }
 
-    int testcase = 1; // atoi(argv[1]);
+    int testcase = atoi(argv[1]);
 
     char filename[20];
     snprintf(filename, sizeof(filename), "testcase%d/input.txt", testcase);
@@ -551,35 +602,35 @@ int main(int argc, char *argv[])
 
     for (int i = 0; i < numDocks; i++)
     {
-        printf("Dock %d: Category %d, Cranes: ", docks[i].id, docks[i].category);
+        // printf("Dock %d: Category %d, Cranes: ", docks[i].id, docks[i].category);
         for (int j = 0; j < docks[i].category; j++)
         {
-            printf("%d ", docks[i].craneCapacities[j]);
+            // printf("%d ", docks[i].craneCapacities[j]);
         }
-        printf("\n");
+        // printf("\n");
     }
 
     // exit(0);
 
     fclose(file);
 
-    printf("Shared Memory Key: %d\n", sharedMemKey);
-    printf("Main Message Queue Key: %d\n", mainMsgQKey);
-    printf("Number of Solvers: %d\n", totalSolvers);
+    // printf("Shared Memory Key: %d\n", sharedMemKey);
+    // printf("Main Message Queue Key: %d\n", mainMsgQKey);
+    // printf("Number of Solvers: %d\n", totalSolvers);
     for (int i = 0; i < totalSolvers; i++)
     {
-        printf("Solver %d Message Queue Key: %d\n", i + 1, solverMsgQKeys[i]);
+        // printf("Solver %d Message Queue Key: %d\n", i + 1, solverMsgQKeys[i]);
     }
-    printf("Number of Docks: %d\n", numDocks);
+    // printf("Number of Docks: %d\n", numDocks);
     for (int i = 0; i < numDocks; i++)
     {
-        printf("Dock %d Category: %d\n", i, docks[i].category);
-        printf("Crane Capacities: ");
+        // printf("Dock %d Category: %d\n", i, docks[i].category);
+        // printf("Crane Capacities: ");
         for (int j = 0; j < docks[i].category; j++)
         {
-            printf("%d ", docks[i].craneCapacities[j]);
+            // printf("%d ", docks[i].craneCapacities[j]);
         }
-        printf("\n");
+        // printf("\n");
     }
 
     int id = msgget(mainMsgQKey, IPC_CREAT | 0666);
@@ -597,15 +648,15 @@ int main(int argc, char *argv[])
         case 1:
             if (msg.isFinished)
             {
-                printf("Scheduler docked all ships\n");
+                // printf("Scheduler docked all ships\n");
                 exit(0);
             }
             processNewShipRequests(sharedMemKey, msg, numDocks, docks, id, msg.timestep, solverMsgQKeys, totalSolvers);
             break;
         default:
-            printf("Unknown message type: %ld\n", msg.mtype);
-            printf("Timestep: %d, Ship ID: %d, Direction: %d, Dock ID: %d\n", msg.timestep, msg.shipId, msg.direction, msg.dockId);
-            printf("Is Finished: %d, Cargo ID: %d\n", msg.isFinished, msg.cargoId);
+            // printf("Unknown message type: %ld\n", msg.mtype);
+            // printf("Timestep: %d, Ship ID: %d, Direction: %d, Dock ID: %d\n", msg.timestep, msg.shipId, msg.direction, msg.dockId);
+            // printf("Is Finished: %d, Cargo ID: %d\n", msg.isFinished, msg.cargoId);
             break;
         }
     }
