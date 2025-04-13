@@ -17,6 +17,7 @@
 #define MAX_AUTH_STRING_LEN 100
 
 char charset[] = {'5', '6', '7', '8', '9', '.'};
+char charsetred[] = {'5', '6', '7', '8', '9'};
 int charsetSize = sizeof(charset) / sizeof(char);
 
 typedef struct
@@ -117,43 +118,144 @@ typedef struct
 } ThreadArgs;
 
 // Flat brute-force approach with prefix bucketing
+// void *solverThreadIterative(void *arg)
+// {
+//     ThreadArgs *args = (ThreadArgs *)arg;
+//     char guess[MAX_AUTH_STRING_LEN + 1];
+//     int maxLen = args->length;
+
+//     // Total prefix combinations (excluding the last char)
+//     long totalPrefixes = 1;
+//     for (int i = 0; i < maxLen - 1; i++)
+//         totalPrefixes *= charsetSize;
+
+//     // Calculate the range of prefix indices this thread should process
+//     long startIdx = (totalPrefixes / args->totalThreads) * args->threadIndex;
+//     long endIdx = (totalPrefixes / args->totalThreads) * (args->threadIndex + 1);
+//     if (args->threadIndex == args->totalThreads - 1)
+//     {
+//         endIdx = totalPrefixes; // Make sure the last thread processes all remaining prefixes
+//     }
+
+//     for (long prefixIndex = startIdx; prefixIndex < endIdx && !*args->found; prefixIndex++)
+//     {
+//         long temp = prefixIndex;
+//         for (int pos = 0; pos < maxLen - 1; pos++)
+//         {
+//             guess[pos] = charset[temp % charsetSize];
+//             temp /= charsetSize;
+//         }
+
+//         // Prune bad prefix (e.g., if starts with '.')
+//         if (guess[0] == '.')
+//             continue;
+        
+//         // Now brute-force the final character
+//         for (int i = finalCharStartIdx; i < charsetSize && !*args->found; i++)
+//         {
+//             guess[maxLen - 1] = charset[i];
+//             guess[maxLen] = '\0';
+
+//             printf("guess is %s\n",guess);
+//         usleep(500000);
+
+//             SolverRequest req = {.mtype = 2, .dockId = args->dockId};
+//             strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
+
+//             if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1)
+//             {
+//                 perror("msgsnd");
+//                 exit(EXIT_FAILURE);
+//             }
+
+//             SolverResponse resp;
+//             if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1)
+//             {
+//                 perror("msgrcv");
+//                 exit(EXIT_FAILURE);
+//             }
+
+//             if (resp.guessIsCorrect)
+//             {
+//                 pthread_mutex_lock(args->lock);
+//                 if (!*args->found)
+//                 {
+//                     *args->found = 1;
+//                     strncpy(args->authString, guess, MAX_AUTH_STRING_LEN);
+//                 }
+//                 pthread_mutex_unlock(args->lock);
+//                 return NULL;
+//             }
+//         }
+//     }
+
+//     return NULL;
+// }
+
 void *solverThreadIterative(void *arg)
 {
     ThreadArgs *args = (ThreadArgs *)arg;
     char guess[MAX_AUTH_STRING_LEN + 1];
     int maxLen = args->length;
 
-    // Total prefix combinations (excluding the last char)
-    long totalPrefixes = 1;
-    for (int i = 0; i < maxLen - 1; i++)
-        totalPrefixes *= charsetSize;
+    int charsetSize = sizeof(charset) / sizeof(char);
+    int charsetRedSize = sizeof(charsetred) / sizeof(char);
 
-    // Calculate the range of prefix indices this thread should process
-    long startIdx = (totalPrefixes / args->totalThreads) * args->threadIndex;
-    long endIdx = (totalPrefixes / args->totalThreads) * (args->threadIndex + 1);
-    if (args->threadIndex == args->totalThreads - 1)
-    {
-        endIdx = totalPrefixes; // Make sure the last thread processes all remaining prefixes
+    // Determine the number of positions that form the prefix (first and middle)
+    int prefixLen = maxLen - 1; // last character will be iterated separately
+
+    // We'll use an array "prefixDigits" of length prefixLen to hold the mixed-radix counter.
+    // Position 0 uses charsetred, positions 1..prefixLen-1 use charset.
+    int prefixDigits[prefixLen];
+    
+    // Initialize the prefix digits to the lowest value:
+    // Position 0: first digit from charsetred
+    prefixDigits[0] = 0;
+    // Middle positions: first character from charset
+    for (int i = 1; i < prefixLen; i++) {
+        prefixDigits[i] = 0;
     }
 
-    for (long prefixIndex = startIdx; prefixIndex < endIdx && !*args->found; prefixIndex++)
-    {
-        long temp = prefixIndex;
-        for (int pos = 0; pos < maxLen - 1; pos++)
-        {
-            guess[pos] = charset[temp % charsetSize];
-            temp /= charsetSize;
+    // Calculate total number of prefix combinations for this thread.
+    // Total prefixes = charsetRedSize * (charsetSize^(prefixLen-1))
+    long totalPrefixes = charsetRedSize;
+    for (int i = 1; i < prefixLen; i++) {
+        totalPrefixes *= charsetSize;
+    }
+
+    // Compute thread's range in the total prefix space.
+    long prefixesPerThread = totalPrefixes / args->totalThreads;
+    long startCount = prefixesPerThread * args->threadIndex;
+    long endCount = (args->threadIndex == args->totalThreads - 1) ? totalPrefixes : (prefixesPerThread * (args->threadIndex + 1));
+
+    // Fast forward to the starting prefix for this thread by "adding" startCount
+    // This is done by simulating the mixed-radix addition.
+    long remaining = startCount;
+    for (int pos = prefixLen - 1; pos >= 0; pos--) {
+        int base = (pos == 0) ? charsetRedSize : charsetSize;
+        prefixDigits[pos] = remaining % base;
+        remaining /= base;
+    }
+
+    // Main loop through assigned prefixes.
+    for (long count = startCount; count < endCount && !*args->found; count++) {
+
+        // Build the guess string from the current prefix
+        // First character:
+        guess[0] = charsetred[prefixDigits[0]];
+        // Middle characters:
+        for (int pos = 1; pos < prefixLen; pos++) {
+            guess[pos] = charset[prefixDigits[pos]];
         }
-
-        // Prune bad prefix (e.g., if starts with '.')
-        if (guess[0] == '.')
-            continue;
-
-        // Now brute-force the final character
-        for (int i = finalCharStartIdx; i < charsetSize && !*args->found; i++)
-        {
-            guess[maxLen - 1] = charset[i];
+        
+        // Now loop through possible last characters (from charsetred)
+        for (int i = 0; i < charsetRedSize && !*args->found; i++) {
+            guess[maxLen - 1] = charsetred[i];
             guess[maxLen] = '\0';
+
+            // Uncomment these if you need debugging output:
+            // printf("guess is %s\n", guess);
+            // usleep(500000);
 
             SolverRequest req = {.mtype = 2, .dockId = args->dockId};
             strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
@@ -183,14 +285,28 @@ void *solverThreadIterative(void *arg)
                 return NULL;
             }
         }
+        
+        // Increment the mixed-radix counter for the prefix.
+        // Start at the rightmost position (prefixDigits[prefixLen-1])
+        int pos = prefixLen - 1;
+        while (pos >= 0) {
+            int base = (pos == 0) ? charsetRedSize : charsetSize;
+            prefixDigits[pos]++;
+            if (prefixDigits[pos] < base)
+                break;
+            // Carry over:
+            prefixDigits[pos] = 0;
+            pos--;
+        }
     }
 
     return NULL;
 }
 
-// Top-level function to launch prefix-bucketed brute force
+// Top-level function remains unchanged except for calling our updated solverThreadIterative.
 void generateAndSendGuesses(int length, int dockId, char *authString, int *solverMsgQ, int numSolvers)
 {
+    // printf("The number of solvers is %d", numSolvers);
     SolverRequest preReq = {.mtype = 1, .dockId = dockId};
     usleep(3000);
 
@@ -236,6 +352,7 @@ void generateAndSendGuesses(int length, int dockId, char *authString, int *solve
 
     pthread_mutex_destroy(&lock);
 }
+
 
 void simulateCargoMovement(int numDocks, Dock *docks, int validationMsgQID, int currentTimestep, ShipRequest *shipsToUndock, MainSharedMemory *mainMem, int numSolvers, int solverMsgQ[])
 {
