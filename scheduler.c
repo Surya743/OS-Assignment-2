@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <math.h>
+#include <stdatomic.h>
 #define MAX_CRANES 30
 #define MAX_DOCKS 30
 #define MAX_CARGO_COUNT 200
@@ -105,16 +106,16 @@ Dock *findBestDock(ShipRequest *ship, int numDocks, Dock *docks)
 #define finalCharStartIdx 0
 
 // Thread arguments structure
-typedef struct
-{
+
+typedef struct {
     int threadIndex;
     int totalThreads;
     int length;
     int dockId;
     int msgqid;
     char *authString;
-    volatile int *found;
-    pthread_mutex_t *lock;
+    atomic_int *found;  // Changed to an atomic integer pointer
+    // Removed the lock field since it's no longer needed
 } ThreadArgs;
 
 // Flat brute-force approach with prefix bucketing
@@ -204,32 +205,25 @@ void *solverThreadIterative(void *arg)
     // Determine the number of positions that form the prefix (first and middle)
     int prefixLen = maxLen - 1; // last character will be iterated separately
 
-    // We'll use an array "prefixDigits" of length prefixLen to hold the mixed-radix counter.
-    // Position 0 uses charsetred, positions 1..prefixLen-1 use charset.
+    // Mixed-radix counter: prefixDigits[0] uses charsetred; positions 1..prefixLen-1 use charset.
     int prefixDigits[prefixLen];
-    
-    // Initialize the prefix digits to the lowest value:
-    // Position 0: first digit from charsetred
     prefixDigits[0] = 0;
-    // Middle positions: first character from charset
     for (int i = 1; i < prefixLen; i++) {
         prefixDigits[i] = 0;
     }
 
-    // Calculate total number of prefix combinations for this thread.
-    // Total prefixes = charsetRedSize * (charsetSize^(prefixLen-1))
+    // Total number of prefix combinations:
     long totalPrefixes = charsetRedSize;
     for (int i = 1; i < prefixLen; i++) {
         totalPrefixes *= charsetSize;
     }
 
-    // Compute thread's range in the total prefix space.
+    // Thread's range of prefixes.
     long prefixesPerThread = totalPrefixes / args->totalThreads;
     long startCount = prefixesPerThread * args->threadIndex;
     long endCount = (args->threadIndex == args->totalThreads - 1) ? totalPrefixes : (prefixesPerThread * (args->threadIndex + 1));
 
-    // Fast forward to the starting prefix for this thread by "adding" startCount
-    // This is done by simulating the mixed-radix addition.
+    // Fast forward the counter to startCount (simulate mixed-radix addition).
     long remaining = startCount;
     for (int pos = prefixLen - 1; pos >= 0; pos--) {
         int base = (pos == 0) ? charsetRedSize : charsetSize;
@@ -237,65 +231,51 @@ void *solverThreadIterative(void *arg)
         remaining /= base;
     }
 
-    // Main loop through assigned prefixes.
-    for (long count = startCount; count < endCount && !*args->found; count++) {
+    // Main loop through the assigned prefixes.
+    for (long count = startCount; count < endCount && atomic_load(args->found) == 0; count++) {
 
-        // Build the guess string from the current prefix
-        // First character:
+        // Build the guess string from the current prefix.
         guess[0] = charsetred[prefixDigits[0]];
-        // Middle characters:
         for (int pos = 1; pos < prefixLen; pos++) {
             guess[pos] = charset[prefixDigits[pos]];
         }
         
-        // Now loop through possible last characters (from charsetred)
-        for (int i = 0; i < charsetRedSize && !*args->found; i++) {
+        // Loop through possible last characters from charsetred.
+        for (int i = 0; i < charsetRedSize && atomic_load(args->found) == 0; i++) {
             guess[maxLen - 1] = charsetred[i];
             guess[maxLen] = '\0';
 
-            // Uncomment these if you need debugging output:
-            // printf("guess is %s\n", guess);
-            // usleep(500000);
-
-            SolverRequest req = {.mtype = 2, .dockId = args->dockId};
+            SolverRequest req = { .mtype = 2, .dockId = args->dockId };
             strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
 
-            if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1)
-            {
+            if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1) {
                 perror("msgsnd");
                 exit(EXIT_FAILURE);
             }
 
             SolverResponse resp;
-            if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1)
-            {
+            if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1) {
                 perror("msgrcv");
                 exit(EXIT_FAILURE);
             }
 
-            if (resp.guessIsCorrect)
-            {
-                pthread_mutex_lock(args->lock);
-                if (!*args->found)
-                {
-                    *args->found = 1;
+            if (resp.guessIsCorrect) {
+                // Use an atomic exchange to check and set the flag.
+                if (atomic_exchange(args->found, 1) == 0) {
                     strncpy(args->authString, guess, MAX_AUTH_STRING_LEN);
                 }
-                pthread_mutex_unlock(args->lock);
                 return NULL;
             }
         }
         
-        // Increment the mixed-radix counter for the prefix.
-        // Start at the rightmost position (prefixDigits[prefixLen-1])
+        // Increment mixed-radix counter.
         int pos = prefixLen - 1;
         while (pos >= 0) {
             int base = (pos == 0) ? charsetRedSize : charsetSize;
             prefixDigits[pos]++;
             if (prefixDigits[pos] < base)
                 break;
-            // Carry over:
-            prefixDigits[pos] = 0;
+            prefixDigits[pos] = 0;  // Carry over.
             pos--;
         }
     }
@@ -303,33 +283,30 @@ void *solverThreadIterative(void *arg)
     return NULL;
 }
 
-// Top-level function remains unchanged except for calling our updated solverThreadIterative.
+// Top-level function for generating and sending guesses.
 void generateAndSendGuesses(int length, int dockId, char *authString, int *solverMsgQ, int numSolvers)
 {
-    // printf("The number of solvers is %d", numSolvers);
-    SolverRequest preReq = {.mtype = 1, .dockId = dockId};
+    SolverRequest preReq = { .mtype = 1, .dockId = dockId };
     usleep(3000);
 
     int solverMsgIDs[numSolvers];
-    for (int i = 0; i < numSolvers; i++)
-    {
+    for (int i = 0; i < numSolvers; i++) {
         int solver_q = msgget(solverMsgQ[i], IPC_CREAT | 0666);
         solverMsgIDs[i] = solver_q;
-        if (msgsnd(solver_q, &preReq, sizeof(preReq) - sizeof(long), 0) == -1)
-        {
+        if (msgsnd(solver_q, &preReq, sizeof(preReq) - sizeof(long), 0) == -1) {
             perror("msgsnd");
             exit(EXIT_FAILURE);
         }
     }
 
     pthread_t threads[numSolvers];
-    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-    volatile int found = 0;
+
+    // Declare the atomic found flag.
+    atomic_int found = ATOMIC_VAR_INIT(0);
     ThreadArgs args[numSolvers];
 
-    // Create threads for solving
-    for (int i = 0; i < numSolvers; i++)
-    {
+    // Create threads for solving.
+    for (int i = 0; i < numSolvers; i++) {
         args[i] = (ThreadArgs){
             .threadIndex = i,
             .totalThreads = numSolvers,
@@ -337,11 +314,11 @@ void generateAndSendGuesses(int length, int dockId, char *authString, int *solve
             .dockId = dockId,
             .msgqid = solverMsgIDs[i],
             .authString = authString,
-            .found = &found,
-            .lock = &lock};
+            .found = &found
+            // The lock field is removed.
+        };
 
-        if (pthread_create(&threads[i], NULL, solverThreadIterative, &args[i]) != 0)
-        {
+        if (pthread_create(&threads[i], NULL, solverThreadIterative, &args[i]) != 0) {
             perror("pthread_create");
             exit(EXIT_FAILURE);
         }
@@ -350,7 +327,7 @@ void generateAndSendGuesses(int length, int dockId, char *authString, int *solve
     for (int i = 0; i < numSolvers; i++)
         pthread_join(threads[i], NULL);
 
-    pthread_mutex_destroy(&lock);
+    // No mutex to destroy.
 }
 
 
