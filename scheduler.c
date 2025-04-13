@@ -10,19 +10,15 @@
 #include <limits.h>
 #include <pthread.h>
 #include <math.h>
-#include <stdatomic.h>
 #define MAX_CRANES 30
 #define MAX_DOCKS 30
 #define MAX_CARGO_COUNT 200
-#define MAX_NEW_REQUESTS 50
+#define MAX_NEW_REQUESTS 100
 #define MAX_AUTH_STRING_LEN 100
 
-// The full character set used for most positions.
 char charset[] = {'5', '6', '7', '8', '9', '.'};
-// A reduced set for positions that must avoid the dot.
 char charsetred[] = {'5', '6', '7', '8', '9'};
 int charsetSize = sizeof(charset) / sizeof(char);
-int charsetRedSize = sizeof(charsetred) / sizeof(char);
 
 typedef struct
 {
@@ -109,216 +105,177 @@ Dock *findBestDock(ShipRequest *ship, int numDocks, Dock *docks)
 #define finalCharStartIdx 0
 
 // Thread arguments structure
-
-typedef struct {
-    int threadIndex;       // Thread number
-    int numThreads;        // Total threads in use
-    int length;            // Total length of the auth string
-    int dockId;            // Identifier for the dock (used in messages)
-    int msgqid;            // Message queue ID for communication
-    char *authString;      // Shared output: the found authentication string
-    atomic_int *found;     // Shared flag (0 if not found; 1 if solution found)
-    atomic_long *globalCounter; // Global counter to dynamically hand out work chunks
-    long totalPrefixes;    // Total number of prefix combinations possible
+typedef struct
+{
+    int threadIndex;
+    int totalThreads;
+    int length;
+    int dockId;
+    int msgqid;
+    char *authString;
+    volatile int *found;
+    pthread_mutex_t *lock;
 } ThreadArgs;
 
+void *solverThreadIterative(void *arg)
+{
+    ThreadArgs *args = (ThreadArgs *)arg;
+    char guess[MAX_AUTH_STRING_LEN + 1];
+    int maxLen = args->length;
 
-// Flat brute-force approach with prefix bucketing
-// void *solverThreadIterative(void *arg)
-// {
-//     ThreadArgs *args = (ThreadArgs *)arg;
-//     char guess[MAX_AUTH_STRING_LEN + 1];
-//     int maxLen = args->length;
+    int charsetSize = sizeof(charset) / sizeof(char);
+    int charsetRedSize = sizeof(charsetred) / sizeof(char);
 
-//     // Total prefix combinations (excluding the last char)
-//     long totalPrefixes = 1;
-//     for (int i = 0; i < maxLen - 1; i++)
-//         totalPrefixes *= charsetSize;
+    // Determine the number of positions that form the prefix (first and middle)
+    int prefixLen = maxLen - 1; // last character will be iterated separately
 
-//     // Calculate the range of prefix indices this thread should process
-//     long startIdx = (totalPrefixes / args->totalThreads) * args->threadIndex;
-//     long endIdx = (totalPrefixes / args->totalThreads) * (args->threadIndex + 1);
-//     if (args->threadIndex == args->totalThreads - 1)
-//     {
-//         endIdx = totalPrefixes; // Make sure the last thread processes all remaining prefixes
-//     }
+    // We'll use an array "prefixDigits" of length prefixLen to hold the mixed-radix counter.
+    // Position 0 uses charsetred, positions 1..prefixLen-1 use charset.
+    int prefixDigits[prefixLen];
+    
+    // Initialize the prefix digits to the lowest value:
+    // Position 0: first digit from charsetred
+    prefixDigits[0] = 0;
+    // Middle positions: first character from charset
+    for (int i = 1; i < prefixLen; i++) {
+        prefixDigits[i] = 0;
+    }
 
-//     for (long prefixIndex = startIdx; prefixIndex < endIdx && !*args->found; prefixIndex++)
-//     {
-//         long temp = prefixIndex;
-//         for (int pos = 0; pos < maxLen - 1; pos++)
-//         {
-//             guess[pos] = charset[temp % charsetSize];
-//             temp /= charsetSize;
-//         }
+    // Calculate total number of prefix combinations for this thread.
+    // Total prefixes = charsetRedSize * (charsetSize^(prefixLen-1))
+    long totalPrefixes = charsetRedSize;
+    for (int i = 1; i < prefixLen; i++) {
+        totalPrefixes *= charsetSize;
+    }
 
-//         // Prune bad prefix (e.g., if starts with '.')
-//         if (guess[0] == '.')
-//             continue;
-        
-//         // Now brute-force the final character
-//         for (int i = finalCharStartIdx; i < charsetSize && !*args->found; i++)
-//         {
-//             guess[maxLen - 1] = charset[i];
-//             guess[maxLen] = '\0';
+    // Compute thread's range in the total prefix space.
+    long prefixesPerThread = totalPrefixes / args->totalThreads;
+    long startCount = prefixesPerThread * args->threadIndex;
+    long endCount = (args->threadIndex == args->totalThreads - 1) ? totalPrefixes : (prefixesPerThread * (args->threadIndex + 1));
 
-//             printf("guess is %s\n",guess);
-//         usleep(500000);
-
-//             SolverRequest req = {.mtype = 2, .dockId = args->dockId};
-//             strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
-
-//             if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1)
-//             {
-//                 perror("msgsnd");
-//                 exit(EXIT_FAILURE);
-//             }
-
-//             SolverResponse resp;
-//             if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1)
-//             {
-//                 perror("msgrcv");
-//                 exit(EXIT_FAILURE);
-//             }
-
-//             if (resp.guessIsCorrect)
-//             {
-//                 pthread_mutex_lock(args->lock);
-//                 if (!*args->found)
-//                 {
-//                     *args->found = 1;
-//                     strncpy(args->authString, guess, MAX_AUTH_STRING_LEN);
-//                 }
-//                 pthread_mutex_unlock(args->lock);
-//                 return NULL;
-//             }
-//         }
-//     }
-
-//     return NULL;
-// }
-#define CHUNK_SIZE 1000
-
-// Helper function to decode a mixed-radix counter into the prefix part of the guess.
-// The first character uses charsetred; remaining positions use charset.
-void decodePrefix(long count, int prefixLen, char *guess) {
-    int digits[prefixLen];
+    // Fast forward to the starting prefix for this thread by "adding" startCount
+    // This is done by simulating the mixed-radix addition.
+    long remaining = startCount;
     for (int pos = prefixLen - 1; pos >= 0; pos--) {
         int base = (pos == 0) ? charsetRedSize : charsetSize;
-        digits[pos] = count % base;
-        count /= base;
+        prefixDigits[pos] = remaining % base;
+        remaining /= base;
     }
-    guess[0] = charsetred[digits[0]];
-    for (int pos = 1; pos < prefixLen; pos++) {
-        guess[pos] = charset[digits[pos]];
-    }
-}
 
-// Thread routine that pulls chunks of work from the global counter and iterates through them.
-void *solverThreadChunked(void *arg) {
-    ThreadArgs *args = (ThreadArgs *)arg;
-    int maxLen = args->length;
-    int prefixLen = maxLen - 1;  // Last character is iterated separately.
-    char guess[MAX_AUTH_STRING_LEN + 1];
+    // Main loop through assigned prefixes.
+    for (long count = startCount; count < endCount && !*args->found; count++) {
 
-    while (!atomic_load(args->found)) {
-        long chunkStart = atomic_fetch_add(args->globalCounter, CHUNK_SIZE);
-        if (chunkStart >= args->totalPrefixes)
-            break;
-        long chunkEnd = chunkStart + CHUNK_SIZE;
-        if (chunkEnd > args->totalPrefixes)
-            chunkEnd = args->totalPrefixes;
+        // Build the guess string from the current prefix
+        // First character:
+        guess[0] = charsetred[prefixDigits[0]];
+        // Middle characters:
+        for (int pos = 1; pos < prefixLen; pos++) {
+            guess[pos] = charset[prefixDigits[pos]];
+        }
+        
+        // Now loop through possible last characters (from charsetred)
+        for (int i = 0; i < charsetRedSize && !*args->found; i++) {
+            guess[maxLen - 1] = charsetred[i];
+            guess[maxLen] = '\0';
 
-        for (long count = chunkStart; count < chunkEnd && !atomic_load(args->found); count++) {
-            // Build the prefix portion of the guess.
-            decodePrefix(count, prefixLen, guess);
-            // Now iterate over possible final characters (from charsetred).
-            for (int i = 0; i < charsetRedSize && !atomic_load(args->found); i++) {
-                guess[maxLen - 1] = charsetred[i];
-                guess[maxLen] = '\0';
+            // Uncomment these if you need debugging output:
+            // printf("guess is %s\n", guess);
+            // usleep(500000);
 
-                SolverRequest req;
-                req.mtype = 2;
-                req.dockId = args->dockId;
-                strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
+            SolverRequest req = {.mtype = 2, .dockId = args->dockId};
+            strncpy(req.authStringGuess, guess, MAX_AUTH_STRING_LEN);
 
-                if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1) {
-                    perror("msgsnd");
-                    exit(EXIT_FAILURE);
+            if (msgsnd(args->msgqid, &req, sizeof(req) - sizeof(long), 0) == -1)
+            {
+                perror("msgsnd");
+                exit(EXIT_FAILURE);
+            }
+
+            SolverResponse resp;
+            if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1)
+            {
+                perror("msgrcv");
+                exit(EXIT_FAILURE);
+            }
+
+            if (resp.guessIsCorrect)
+            {
+                pthread_mutex_lock(args->lock);
+                if (!*args->found)
+                {
+                    *args->found = 1;
+                    strncpy(args->authString, guess, MAX_AUTH_STRING_LEN);
                 }
-
-                SolverResponse resp;
-                if (msgrcv(args->msgqid, &resp, sizeof(resp) - sizeof(long), 3, 0) == -1) {
-                    perror("msgrcv");
-                    exit(EXIT_FAILURE);
-                }
-
-                if (resp.guessIsCorrect) {
-                    // If the guess is correct, update the flag using an atomic exchange.
-                    if (atomic_exchange(args->found, 1) == 0) {
-                        strncpy(args->authString, guess, MAX_AUTH_STRING_LEN);
-                    }
-                    return NULL;
-                }
+                pthread_mutex_unlock(args->lock);
+                return NULL;
             }
         }
+        
+        // Increment the mixed-radix counter for the prefix.
+        // Start at the rightmost position (prefixDigits[prefixLen-1])
+        int pos = prefixLen - 1;
+        while (pos >= 0) {
+            int base = (pos == 0) ? charsetRedSize : charsetSize;
+            prefixDigits[pos]++;
+            if (prefixDigits[pos] < base)
+                break;
+            // Carry over:
+            prefixDigits[pos] = 0;
+            pos--;
+        }
     }
+
     return NULL;
 }
 
-// Top-level function for generating and sending guesses using dynamic chunking.
-void generateAndSendGuesses(int length, int dockId, char *authString, int *solverMsgQ, int numSolvers) {
-    // Send a preliminary request to the solver (if required by the external system).
+// Top-level function remains unchanged except for calling our updated solverThreadIterative.
+void generateAndSendGuesses(int length, int dockId, char *authString, int *solverMsgQ, int numSolvers)
+{
+    // printf("The number of solvers is %d", numSolvers);
     SolverRequest preReq = {.mtype = 1, .dockId = dockId};
     usleep(300);
 
     int solverMsgIDs[numSolvers];
-    for (int i = 0; i < numSolvers; i++) {
+    for (int i = 0; i < numSolvers; i++)
+    {
         int solver_q = msgget(solverMsgQ[i], IPC_CREAT | 0666);
         solverMsgIDs[i] = solver_q;
-        if (msgsnd(solver_q, &preReq, sizeof(preReq) - sizeof(long), 0) == -1) {
+        if (msgsnd(solver_q, &preReq, sizeof(preReq) - sizeof(long), 0) == -1)
+        {
             perror("msgsnd");
             exit(EXIT_FAILURE);
         }
     }
 
     pthread_t threads[numSolvers];
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    volatile int found = 0;
     ThreadArgs args[numSolvers];
 
-    // Calculate total number of prefix combinations (mixed-radix conversion):
-    // The first position uses charsetred (charsetRedSize possibilities) and the following (length-2) positions use charset.
-    int prefixLen = length - 1;
-    long totalPrefixes = charsetRedSize;
-    for (int i = 1; i < prefixLen; i++) {
-        totalPrefixes *= charsetSize;
-    }
+    // Create threads for solving
+    for (int i = 0; i < numSolvers; i++)
+    {
+        args[i] = (ThreadArgs){
+            .threadIndex = i,
+            .totalThreads = numSolvers,
+            .length = length,
+            .dockId = dockId,
+            .msgqid = solverMsgIDs[i],
+            .authString = authString,
+            .found = &found,
+            .lock = &lock};
 
-    // Shared atomic flag to indicate a found solution and the global counter for dynamic work allocation.
-    atomic_int found = ATOMIC_VAR_INIT(0);
-    atomic_long globalCounter = ATOMIC_VAR_INIT(0);
-
-    // Create threads.
-    for (int i = 0; i < numSolvers; i++) {
-        args[i].threadIndex = i;
-        args[i].numThreads = numSolvers;
-        args[i].length = length;
-        args[i].dockId = dockId;
-        args[i].msgqid = solverMsgIDs[i];
-        args[i].authString = authString;
-        args[i].found = &found;
-        args[i].globalCounter = &globalCounter;
-        args[i].totalPrefixes = totalPrefixes;
-
-        if (pthread_create(&threads[i], NULL, solverThreadChunked, &args[i]) != 0) {
+        if (pthread_create(&threads[i], NULL, solverThreadIterative, &args[i]) != 0)
+        {
             perror("pthread_create");
             exit(EXIT_FAILURE);
         }
     }
 
-    // Wait for all threads to finish.
-    for (int i = 0; i < numSolvers; i++) {
+    for (int i = 0; i < numSolvers; i++)
         pthread_join(threads[i], NULL);
-    }
+
+    pthread_mutex_destroy(&lock);
 }
 
 
